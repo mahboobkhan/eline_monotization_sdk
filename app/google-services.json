@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "478198687698",
+    "project_id": "cloud-storage-eline",
+    "storage_bucket": "cloud-storage-eline.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478198687698:android:0c30cff02542088a21ca0b",
+        "android_client_info": {
+          "package_name": "com.cloud.storage.eline.cloud_storage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "478198687698-f6hrehtltfiemoh9l7kio2b6327299o9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cloud.storage.eline.cloud_storage",
+            "certificate_hash": "0b958899246f248f519757ced67933d07151726e"
+          }
+        },
+        {
+          "client_id": "478198687698-ti0qu3v13huq10aaencqi75asqjihths.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCR1-g8YpsjY19VhGqufEXyl2LWXXSD264"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "478198687698-ti0qu3v13huq10aaencqi75asqjihths.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "478198687698-dpgpc1c5usl8en0t3l6gckfpir198kjg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.cloud.storage.eline.cloudStorage"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

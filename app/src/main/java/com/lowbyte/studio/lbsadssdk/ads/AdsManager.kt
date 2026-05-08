@@ -1,0 +1,80 @@
+package com.lowbyte.studio.lbsadssdk.ads
+
+import android.app.Activity
+import android.app.Application
+import android.view.ViewGroup
+import com.lowbyte.studio.lbsadssdk.billing.BillingManager
+import com.lowbyte.studio.lbsadssdk.remote.RemoteConfigManager
+import com.lowbyte.studio.lbsadssdk.utils.NetworkUtils
+
+object AdsManager {
+    private lateinit var interstitialManager: InterstitialAdManager
+    private lateinit var rewardedManager: RewardedAdManager
+    private lateinit var appOpenManager: AppOpenAdManager
+    private lateinit var billingManager: BillingManager
+
+    var adsEnabled = true
+
+    fun init(application: Application, billing: BillingManager) {
+        billingManager = billing
+        
+        // Load IDs from Remote Config or use default/test
+        val interstitialId = AdIds.getInterstitialId(RemoteConfigManager.getString("interstitial_id"))
+        val rewardedId = AdIds.getRewardedId(RemoteConfigManager.getString("rewarded_id"))
+        val appOpenId = AdIds.getAppOpenId(RemoteConfigManager.getString("app_open_id"))
+
+        interstitialManager = InterstitialAdManager(interstitialId)
+        rewardedManager = RewardedAdManager(rewardedId)
+        appOpenManager = AppOpenAdManager(application, appOpenId)
+        
+        adsEnabled = RemoteConfigManager.getBoolean("ads_enabled")
+    }
+
+    private fun canShowAds(activity: Activity): Boolean {
+        return adsEnabled && !billingManager.isUserPro() && NetworkUtils.isNetworkAvailable(activity)
+    }
+
+    fun loadInterstitial(activity: Activity) {
+        if (canShowAds(activity)) interstitialManager.loadAd(activity)
+    }
+
+    fun showInterstitial(activity: Activity, onDismiss: () -> Unit) {
+        if (canShowAds(activity)) {
+            interstitialManager.showAd(activity, onDismiss)
+        } else {
+            onDismiss()
+        }
+    }
+
+    fun loadRewarded(activity: Activity) {
+        if (canShowAds(activity)) rewardedManager.loadAd(activity)
+    }
+
+    fun showRewarded(activity: Activity, onReward: (Boolean) -> Unit) {
+        if (canShowAds(activity)) {
+            rewardedManager.showAd(activity, onReward)
+        } else {
+            onReward(true) // Treat as rewarded if ads are disabled/pro
+        }
+    }
+
+    fun showBanner(activity: Activity, container: ViewGroup) {
+        if (canShowAds(activity)) {
+            val bannerId = AdIds.getBannerId(RemoteConfigManager.getString("banner_id"))
+            BannerAdManager(bannerId).loadBanner(activity, container)
+        } else {
+            container.removeAllViews()
+            container.visibility = android.view.View.GONE
+        }
+    }
+
+    fun showNative(activity: Activity, container: ViewGroup, layoutResId: Int) {
+        if (canShowAds(activity)) {
+            val nativeId = AdIds.getNativeId(RemoteConfigManager.getString("native_id"))
+            NativeAdManager(nativeId).loadNativeAd(activity, container, layoutResId)
+        } else {
+            container.removeAllViews()
+            container.visibility = android.view.View.GONE
+        }
+    }
+}

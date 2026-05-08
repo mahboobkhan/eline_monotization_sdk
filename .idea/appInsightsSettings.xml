@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.cloud.storage.eline.cloud_storage" />
+                  <option name="mobileSdkAppId" value="1:478198687698:android:0c30cff02542088a21ca0b" />
+                  <option name="projectId" value="cloud-storage-eline" />
+                  <option name="projectNumber" value="478198687698" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
