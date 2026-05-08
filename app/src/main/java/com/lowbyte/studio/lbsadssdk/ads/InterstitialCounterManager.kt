@@ -70,7 +70,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
      */
     fun showAd(
         activity: Activity,
-        threshold: Int,
+        threshold: Int = 2,
         remote: Boolean = true,
         startCountOnDismiss: Boolean = true,
         preloadAfterShow: Boolean = true,
@@ -79,7 +79,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
         overrideAdUnitId: String? = null,
         onDismiss: () -> Unit
     ) {
-        if (remote) {
+        if (startCountOnDismiss) {
             currentCount++
             Log.d(TAG, "Current count: $currentCount, Threshold: $threshold")
             AnalyticsManager.logEvent("counter_interstitial_count", Bundle().apply {
@@ -95,7 +95,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
             }
         }
 
-        if (interstitialAd != null) {
+        if (interstitialAd != null && remote && overrideAdUnitId != null) {
             Log.d(TAG, "Showing ad...")
             AnalyticsManager.logEvent("counter_interstitial_show_start")
             
@@ -105,7 +105,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
                         Log.i(TAG, "Ad dismissed. Resetting counter.")
                         AnalyticsManager.logEvent("counter_interstitial_dismissed")
                         interstitialAd = null
-                        if (remote) currentCount = 0 // Reset
+                        if (startCountOnDismiss) currentCount = 0 // Reset
                         if (preloadAfterShow) {
                             Log.d(TAG, "Preloading next ad.")
                             loadAd(activity, overrideAdUnitId = overrideAdUnitId)
@@ -117,7 +117,9 @@ class InterstitialCounterManager(private val adUnitId: String) {
                         Log.e(TAG, "Ad failed to show: ${error.message}")
                         AnalyticsManager.logEvent("counter_interstitial_show_failed")
                         interstitialAd = null
-                        if (preloadAfterShow) loadAd(activity, overrideAdUnitId = overrideAdUnitId)
+                        if (preloadAfterShow) {
+                            loadAd(activity, overrideAdUnitId = overrideAdUnitId)
+                        }
                         onDismiss()
                     }
 
