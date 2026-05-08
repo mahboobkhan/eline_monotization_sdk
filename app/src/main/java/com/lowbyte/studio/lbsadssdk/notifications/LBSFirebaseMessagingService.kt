@@ -2,7 +2,6 @@ package com.lowbyte.studio.lbsadssdk.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingContext
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -13,10 +12,10 @@ import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getSystemService
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.lowbyte.studio.lbsadssdk.R
+import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 import java.net.HttpURLConnection
 import java.net.URL
 

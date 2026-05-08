@@ -3,6 +3,7 @@ package com.lowbyte.studio.lbsadssdk.ads
 import android.app.Activity
 import android.app.Application
 import android.view.ViewGroup
+import com.google.android.gms.ads.rewarded.RewardItem
 import com.lowbyte.studio.lbsadssdk.billing.BillingManager
 import com.lowbyte.studio.lbsadssdk.remote.RemoteConfigManager
 import com.lowbyte.studio.lbsadssdk.utils.NetworkUtils
@@ -51,11 +52,16 @@ object AdsManager {
         if (canShowAds(activity)) rewardedManager.loadAd(activity)
     }
 
-    fun showRewarded(activity: Activity, onReward: (Boolean) -> Unit) {
+    fun showRewarded(activity: Activity, onRewardEarned: (RewardItem) -> Unit, onDismiss: () -> Unit) {
         if (canShowAds(activity)) {
-            rewardedManager.showAd(activity, onReward)
+            rewardedManager.showAd(activity, onRewardEarned, onDismiss)
         } else {
-            onReward(true) // Treat as rewarded if ads are disabled/pro
+            // If pro/no-ads, provide a dummy reward item so the flow can continue
+            onRewardEarned(object : RewardItem {
+                override fun getType(): String = "pro_reward"
+                override fun getAmount(): Int = 1
+            })
+            onDismiss()
         }
     }
 

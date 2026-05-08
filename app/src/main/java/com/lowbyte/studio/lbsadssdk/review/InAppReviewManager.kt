@@ -3,6 +3,7 @@ package com.lowbyte.studio.lbsadssdk.review
 import android.app.Activity
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 
 object InAppReviewManager {
     fun launchReviewFlow(activity: Activity) {

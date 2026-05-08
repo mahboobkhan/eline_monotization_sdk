@@ -8,6 +8,7 @@ import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 
 class InAppUpdateManager(private val activity: Activity) {
 
