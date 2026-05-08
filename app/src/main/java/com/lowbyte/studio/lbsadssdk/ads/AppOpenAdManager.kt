@@ -10,6 +10,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.AdError
+import android.util.Log
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
@@ -23,6 +24,7 @@ class AppOpenAdManager(
     private val adUnitId: String
 ) : DefaultLifecycleObserver, Application.ActivityLifecycleCallbacks {
 
+    private val TAG = "AppOpenAd"
     private var appOpenAd: AppOpenAd? = null
     private var isLoadingAd = false
     private var isShowingAd = false
@@ -40,10 +42,21 @@ class AppOpenAdManager(
     }
 
     fun loadAd() {
-        if (!RemoteConfigManager.getBoolean("ads_on") || !RemoteConfigManager.getBoolean("app_open_on")) return
-        if (billingManager?.isUserPro() == true) return
+        if (!RemoteConfigManager.getBoolean("ads_on") || !RemoteConfigManager.getBoolean("app_open_on")) {
+            Log.d(TAG, "App Open ads disabled via remote config.")
+            return
+        }
+        if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "User is pro, skipping app open load.")
+            return
+        }
         
-        if (isLoadingAd || isAdAvailable()) return
+        if (isLoadingAd || isAdAvailable()) {
+            Log.d(TAG, "Ad already loading or available.")
+            return
+        }
+        
+        Log.i(TAG, "Loading App Open ad for ID: $adUnitId")
         isLoadingAd = true
         AnalyticsManager.logEvent("app_open_load_start")
         val request = AdRequest.Builder().build()
@@ -51,6 +64,7 @@ class AppOpenAdManager(
             application, adUnitId, request,
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdLoaded(ad: AppOpenAd) {
+                    Log.i(TAG, "App Open ad loaded successfully.")
                     AnalyticsManager.logEvent("app_open_loaded")
                     appOpenAd = ad
                     isLoadingAd = false
@@ -58,6 +72,7 @@ class AppOpenAdManager(
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                    Log.e(TAG, "App Open ad failed to load: ${loadAdError.message}")
                     AnalyticsManager.logEvent("app_open_load_failed", Bundle().apply {
                         putString("error", loadAdError.message)
                     })
@@ -77,20 +92,27 @@ class AppOpenAdManager(
     }
 
     fun showAdIfAvailable(activity: Activity, onComplete: (() -> Unit)? = null) {
-        if (isShowingAd) return
+        if (isShowingAd) {
+            Log.d(TAG, "Ad already showing.")
+            return
+        }
         
         if (billingManager?.isUserPro() == true || 
             !RemoteConfigManager.getBoolean("ads_on") || 
             !RemoteConfigManager.getBoolean("app_open_on")) {
+            Log.d(TAG, "Skipping ad show: Pro status or disabled.")
             onComplete?.invoke()
             return
         }
 
         if (!isAdAvailable()) {
+            Log.w(TAG, "Ad not available when show requested. Loading...")
             loadAd()
             onComplete?.invoke()
             return
         }
+
+        Log.d(TAG, "Showing App Open ad...")
 
         val dialog = AdLoadingDialog(activity)
         dialog.show()
@@ -99,6 +121,7 @@ class AppOpenAdManager(
             dialog.dismiss()
             appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
+                    Log.i(TAG, "App Open ad dismissed.")
                     AnalyticsManager.logEvent("app_open_dismissed")
                     appOpenAd = null
                     isShowingAd = false
@@ -107,6 +130,7 @@ class AppOpenAdManager(
                 }
 
                 override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    Log.e(TAG, "App Open ad failed to show: ${adError.message}")
                     AnalyticsManager.logEvent("app_open_show_failed", Bundle().apply {
                         putString("error", adError.message)
                     })
@@ -117,11 +141,13 @@ class AppOpenAdManager(
                 }
 
                 override fun onAdShowedFullScreenContent() {
+                    Log.d(TAG, "App Open ad shown.")
                     AnalyticsManager.logEvent("app_open_show_start")
                     isShowingAd = true
                 }
 
                 override fun onAdClicked() {
+                    Log.d(TAG, "App Open ad clicked.")
                     AnalyticsManager.logEvent("app_open_clicked")
                 }
             }

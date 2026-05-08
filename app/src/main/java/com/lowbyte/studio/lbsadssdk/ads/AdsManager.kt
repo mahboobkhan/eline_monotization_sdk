@@ -10,6 +10,9 @@ import com.lowbyte.studio.lbsadssdk.utils.NetworkUtils
 
 object AdsManager {
     private lateinit var interstitialManager: InterstitialAdManager
+    private lateinit var interstitialSimple: InterstitialSimpleManager
+    private lateinit var interstitialCounter: InterstitialCounterManager
+    private lateinit var interstitialInterval: InterstitialIntervalManager
     private lateinit var rewardedManager: RewardedAdManager
     private lateinit var appOpenManager: AppOpenAdManager
     private lateinit var billingManager: BillingManager
@@ -25,6 +28,10 @@ object AdsManager {
         val appOpenId = AdIds.getAppOpenId(RemoteConfigManager.getString("app_open_id"))
 
         interstitialManager = InterstitialAdManager(interstitialId)
+        interstitialSimple = InterstitialSimpleManager(interstitialId)
+        interstitialCounter = InterstitialCounterManager(interstitialId)
+        interstitialInterval = InterstitialIntervalManager(interstitialId)
+        
         rewardedManager = RewardedAdManager(rewardedId)
         appOpenManager = AppOpenAdManager(application, appOpenId)
         appOpenManager.setBillingManager(billingManager)
@@ -87,4 +94,8 @@ object AdsManager {
 
     fun getAppOpenManager() = appOpenManager
     fun getBillingManager() = billingManager
+    
+    fun getInterstitialSimple() = interstitialSimple
+    fun getInterstitialCounter() = interstitialCounter
+    fun getInterstitialInterval() = interstitialInterval
 }
