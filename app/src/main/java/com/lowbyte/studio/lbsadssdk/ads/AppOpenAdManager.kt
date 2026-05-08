@@ -91,7 +91,12 @@ class AppOpenAdManager(
         return dateDifference < numMilliSecondsPerHour * numHours
     }
 
-    fun showAdIfAvailable(activity: Activity, onComplete: (() -> Unit)? = null) {
+    fun showAdIfAvailable(
+        activity: Activity,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        onComplete: (() -> Unit)? = null
+    ) {
         if (isShowingAd) {
             Log.d(TAG, "Ad already showing.")
             return
@@ -114,11 +119,11 @@ class AppOpenAdManager(
 
         Log.d(TAG, "Showing App Open ad...")
 
-        val dialog = AdLoadingDialog(activity)
-        dialog.show()
+        val dialog = if (showDialog) AdLoadingDialog(activity) else null
+        dialog?.show()
 
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            dialog.dismiss()
+            dialog?.dismiss()
             appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     Log.i(TAG, "App Open ad dismissed.")
@@ -152,7 +157,7 @@ class AppOpenAdManager(
                 }
             }
             appOpenAd?.show(activity)
-        }, 500)
+        }, delayMs)
     }
 
     override fun onStart(owner: LifecycleOwner) {

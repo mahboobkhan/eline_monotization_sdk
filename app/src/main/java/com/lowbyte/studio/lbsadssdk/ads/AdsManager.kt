@@ -47,9 +47,14 @@ object AdsManager {
         if (canShowAds(activity)) interstitialManager.loadAd(activity)
     }
 
-    fun showInterstitial(activity: Activity, onDismiss: () -> Unit) {
+    fun showInterstitial(
+        activity: Activity,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        onDismiss: () -> Unit
+    ) {
         if (canShowAds(activity)) {
-            interstitialManager.showAd(activity, onDismiss)
+            interstitialManager.showAd(activity, showDialog, delayMs, onDismiss)
         } else {
             onDismiss()
         }
@@ -59,9 +64,15 @@ object AdsManager {
         if (canShowAds(activity)) rewardedManager.loadAd(activity)
     }
 
-    fun showRewarded(activity: Activity, onRewardEarned: (RewardItem) -> Unit, onDismiss: () -> Unit) {
+    fun showRewarded(
+        activity: Activity,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        onRewardEarned: (RewardItem) -> Unit,
+        onDismiss: () -> Unit
+    ) {
         if (canShowAds(activity)) {
-            rewardedManager.showAd(activity, onRewardEarned, onDismiss)
+            rewardedManager.showAd(activity, showDialog, delayMs, onRewardEarned, onDismiss)
         } else {
             // If pro/no-ads, provide a dummy reward item so the flow can continue
             onRewardEarned(object : RewardItem {

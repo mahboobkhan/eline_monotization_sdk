@@ -10,7 +10,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
-import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
+import com.lowbyte.studio.lbsadssdk.utils.AdShowHelper
 
 /**
  * Type 2: Counter-based Ad
@@ -25,7 +25,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
     /**
      * @param reload If true, reload ad if not currently loading. Default false (Pre-Cache).
      */
-    fun loadAd(activity: Activity, reload: Boolean = false) {
+    fun loadAd(activity: Activity, reload: Boolean = false, overrideAdUnitId: String? = null) {
         if (isLoading) {
             Log.d(TAG, "Ad is already loading, skipping.")
             return
@@ -36,11 +36,12 @@ class InterstitialCounterManager(private val adUnitId: String) {
             return
         }
 
-        Log.i(TAG, "Loading counter-based ad for ID: $adUnitId")
+        val unitId = overrideAdUnitId ?: adUnitId
+        Log.i(TAG, "Loading counter-based ad for ID: $unitId")
         isLoading = true
         AnalyticsManager.logEvent("counter_interstitial_load_start")
         val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(activity, adUnitId, adRequest, object : InterstitialAdLoadCallback() {
+        InterstitialAd.load(activity, unitId, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(ad: InterstitialAd) {
                 Log.i(TAG, "Ad loaded successfully.")
                 interstitialAd = ad
@@ -64,6 +65,8 @@ class InterstitialCounterManager(private val adUnitId: String) {
      * @param remote If true, respect the counter. If false, show immediately if available.
      * @param startCountOnDismiss If true, increment on dismiss. Default true.
      * @param preloadAfterShow If true, start preloading after ad is shown.
+     * @param showDialog If true, show a loading dialog before ad.
+     * @param delayMs Delay before showing ad. Default 500ms.
      */
     fun showAd(
         activity: Activity,
@@ -71,6 +74,9 @@ class InterstitialCounterManager(private val adUnitId: String) {
         remote: Boolean = true,
         startCountOnDismiss: Boolean = true,
         preloadAfterShow: Boolean = true,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        overrideAdUnitId: String? = null,
         onDismiss: () -> Unit
     ) {
         if (remote) {
@@ -92,11 +98,8 @@ class InterstitialCounterManager(private val adUnitId: String) {
         if (interstitialAd != null) {
             Log.d(TAG, "Showing ad...")
             AnalyticsManager.logEvent("counter_interstitial_show_start")
-            val dialog = AdLoadingDialog(activity)
-            dialog.show()
-
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                dialog.dismiss()
+            
+            AdShowHelper.showAdWithOptionalDialog(activity, showDialog, delayMs) {
                 interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         Log.i(TAG, "Ad dismissed. Resetting counter.")
@@ -105,7 +108,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
                         if (remote) currentCount = 0 // Reset
                         if (preloadAfterShow) {
                             Log.d(TAG, "Preloading next ad.")
-                            loadAd(activity)
+                            loadAd(activity, overrideAdUnitId = overrideAdUnitId)
                         }
                         onDismiss()
                     }
@@ -114,7 +117,7 @@ class InterstitialCounterManager(private val adUnitId: String) {
                         Log.e(TAG, "Ad failed to show: ${error.message}")
                         AnalyticsManager.logEvent("counter_interstitial_show_failed")
                         interstitialAd = null
-                        if (preloadAfterShow) loadAd(activity)
+                        if (preloadAfterShow) loadAd(activity, overrideAdUnitId = overrideAdUnitId)
                         onDismiss()
                     }
 
@@ -124,11 +127,11 @@ class InterstitialCounterManager(private val adUnitId: String) {
                     }
                 }
                 interstitialAd?.show(activity)
-            }, 800)
+            }
         } else {
-            Log.w(TAG, "Ad not loaded when show requested.")
+            Log.w(TAG, "Ad not loaded when show requested. Loading...")
             AnalyticsManager.logEvent("counter_interstitial_not_loaded")
-            loadAd(activity)
+            loadAd(activity, overrideAdUnitId = overrideAdUnitId)
             onDismiss()
         }
     }

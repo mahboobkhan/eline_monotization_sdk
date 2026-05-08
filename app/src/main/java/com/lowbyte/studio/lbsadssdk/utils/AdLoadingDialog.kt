@@ -13,8 +13,8 @@ class AdLoadingDialog(context: Context) : Dialog(context) {
     init {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         val binding = DialogAdLoadingBinding.inflate(LayoutInflater.from(context))
-        setContentView(binding.root as android.view.View)
-        window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        setContentView(binding.root)
+        window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         setCancelable(false)
     }
 }

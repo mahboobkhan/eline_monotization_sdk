@@ -15,13 +15,14 @@ class RewardedAdManager(private val adUnitId: String) {
     private var rewardedAd: RewardedAd? = null
     private var isLoading = false
 
-    fun loadAd(activity: Activity) {
+    fun loadAd(activity: Activity, overrideAdUnitId: String? = null) {
         if (isLoading || rewardedAd != null) return
         isLoading = true
         AnalyticsManager.logEvent("rewarded_load_start")
 
+        val unitId = overrideAdUnitId ?: adUnitId
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(activity, adUnitId, adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(activity, unitId, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdLoaded(ad: RewardedAd) {
                 AnalyticsManager.logEvent("rewarded_loaded")
                 rewardedAd = ad
@@ -38,19 +39,27 @@ class RewardedAdManager(private val adUnitId: String) {
         })
     }
 
-    fun showAd(activity: Activity, onRewardEarned: (RewardItem) -> Unit, onDismiss: () -> Unit) {
+    fun showAd(
+        activity: Activity,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        overrideAdUnitId: String? = null,
+        onRewardEarned: (RewardItem) -> Unit,
+        onDismiss: () -> Unit
+    ) {
         if (rewardedAd != null) {
             AnalyticsManager.logEvent("rewarded_show_start")
-            val dialog = AdLoadingDialog(activity)
-            dialog.show()
+            
+            val dialog = if (showDialog) AdLoadingDialog(activity) else null
+            dialog?.show()
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                dialog.dismiss()
+                dialog?.dismiss()
                 rewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         AnalyticsManager.logEvent("rewarded_dismissed")
                         rewardedAd = null
-                        loadAd(activity)
+                        loadAd(activity, overrideAdUnitId)
                         onDismiss()
                     }
 
@@ -73,10 +82,10 @@ class RewardedAdManager(private val adUnitId: String) {
                     })
                     onRewardEarned(rewardItem)
                 }
-            }, 1000)
+            }, delayMs)
         } else {
             AnalyticsManager.logEvent("rewarded_not_loaded")
-            loadAd(activity)
+            loadAd(activity, overrideAdUnitId)
             onDismiss()
         }
     }
