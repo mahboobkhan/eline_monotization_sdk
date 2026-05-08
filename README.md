@@ -26,6 +26,12 @@ A comprehensive, modular, and premium Android Ad SDK wrapper for AdMob, Firebase
 - [x] **Play Store Utilities**:
     - [x] In-App Review Manager
     - [x] In-App Update (Flexible & Force)
+- [x] **Firebase Cloud Messaging (FCM)**:
+    - [x] Custom Messaging Service
+    - [x] Custom Notification Design (Day/Night compatible)
+    - [x] Permission Handling (Android 13+)
+    - [x] Feature Image & Icon Support
+    - [x] Topic Subscribe/Unsubscribe
 - [x] **Performance & Stability**:
     - [x] Firebase Crashlytics & Performance monitoring
     - [x] Memory Leak Protection (WeakReferences & Application Context)
@@ -100,6 +106,29 @@ AnalyticsManager.logEvent("button_clicked", Bundle().apply {
     putString("button_name", "home_start")
 })
 ```
+
+### 5. Notifications & FCM
+
+#### Request Permissions
+```kotlin
+FCMManager.requestNotificationPermission(activity, 101)
+```
+
+#### Subscribe to Topics
+```kotlin
+FCMManager.subscribeToTopic("new_deals") { success ->
+    // Handle result
+}
+```
+
+#### Custom Notification Payload
+The SDK handles incoming data payloads automatically. Send these keys via FCM:
+- `title`: Notification Title
+- `body`: Notification Body
+- `icon_url`: Small Icon URL
+- `feature_image_url`: Big Feature Image URL
+- `is_ad`: Set to "true" to show an AD badge
+- `link`: URL to open on click
 
 ---
 
