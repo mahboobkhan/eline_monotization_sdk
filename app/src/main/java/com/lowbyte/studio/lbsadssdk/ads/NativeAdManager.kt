@@ -21,6 +21,7 @@ import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 class NativeAdManager(private val adUnitId: String) {
 
     fun loadNativeAd(activity: Activity, container: ViewGroup, layoutResId: Int) {
+        AnalyticsManager.logEvent("native_load_start")
         // Show Shimmer
         val shimmer = activity.layoutInflater.inflate(R.layout.layout_native_shimmer, container, false)
         container.removeAllViews()
@@ -32,12 +33,20 @@ class NativeAdManager(private val adUnitId: String) {
                 populateNativeAdView(nativeAd, adView)
                 container.removeAllViews()
                 container.addView(adView)
+                AnalyticsManager.logEvent("native_loaded")
                 AnalyticsManager.logAdImpression(adUnitId, "Native")
             }
             .withAdListener(object : AdListener() {
                 override fun onAdFailedToLoad(error: LoadAdError) {
+                    AnalyticsManager.logEvent("native_load_failed", android.os.Bundle().apply {
+                        putString("error", error.message)
+                    })
                     container.removeAllViews()
                     container.visibility = View.GONE
+                }
+
+                override fun onAdClicked() {
+                    AnalyticsManager.logEvent("native_clicked")
                 }
             })
             .withNativeAdOptions(NativeAdOptions.Builder().build())

@@ -13,6 +13,7 @@ import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.lowbyte.studio.lbsadssdk.R
@@ -23,6 +24,7 @@ class LBSFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
+        AnalyticsManager.logEvent("notification_received")
 
         val data = remoteMessage.data
         if (data.isNotEmpty()) {
@@ -120,6 +122,7 @@ class LBSFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        AnalyticsManager.logEvent("notification_token_new")
         // You could send this to your server or log it
     }
 }

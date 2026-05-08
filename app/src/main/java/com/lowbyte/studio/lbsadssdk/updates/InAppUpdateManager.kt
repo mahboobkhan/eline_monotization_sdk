@@ -14,19 +14,33 @@ class InAppUpdateManager(private val activity: Activity) {
     private val appUpdateManager: AppUpdateManager = AppUpdateManagerFactory.create(activity)
     private val UPDATE_REQUEST_CODE = 123
 
-    fun checkForUpdate(isForceUpdate: Boolean) {
+    fun checkForUpdate(activity: Activity) {
+        AnalyticsManager.logEvent("update_check_start")
         val appUpdateInfoTask = appUpdateManager.appUpdateInfo
         appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
-                val updateType = if (isForceUpdate) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
-                if (appUpdateInfo.isUpdateTypeAllowed(updateType)) {
+                AnalyticsManager.logEvent("update_available", android.os.Bundle().apply {
+                    putInt("version_code", appUpdateInfo.availableVersionCode())
+                })
+                if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                    AnalyticsManager.logEvent("update_start_immediate")
                     appUpdateManager.startUpdateFlowForResult(
                         appUpdateInfo,
-                        updateType,
+                        AppUpdateType.IMMEDIATE,
+                        activity,
+                        UPDATE_REQUEST_CODE
+                    )
+                } else if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                    AnalyticsManager.logEvent("update_start_flexible")
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        AppUpdateType.FLEXIBLE,
                         activity,
                         UPDATE_REQUEST_CODE
                     )
                 }
+            } else {
+                AnalyticsManager.logEvent("update_not_available")
             }
         }
     }

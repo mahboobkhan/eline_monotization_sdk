@@ -14,6 +14,7 @@ import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 class BannerAdManager(private val adUnitId: String) {
 
     fun loadBanner(activity: Activity, container: ViewGroup, adSize: AdSize = AdSize.BANNER) {
+        AnalyticsManager.logEvent("banner_load_start")
         // Show Shimmer
         val shimmer = activity.layoutInflater.inflate(R.layout.layout_banner_shimmer, container, false)
         container.removeAllViews()
@@ -27,12 +28,20 @@ class BannerAdManager(private val adUnitId: String) {
             override fun onAdLoaded() {
                 container.removeAllViews()
                 container.addView(adView)
+                AnalyticsManager.logEvent("banner_loaded")
                 AnalyticsManager.logAdImpression(adUnitId, "Banner")
             }
 
             override fun onAdFailedToLoad(error: LoadAdError) {
+                AnalyticsManager.logEvent("banner_load_failed", android.os.Bundle().apply {
+                    putString("error", error.message)
+                })
                 container.removeAllViews()
                 container.visibility = View.GONE
+            }
+
+            override fun onAdOpened() {
+                AnalyticsManager.logEvent("banner_clicked")
             }
         }
 

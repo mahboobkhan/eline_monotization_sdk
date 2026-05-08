@@ -15,46 +15,66 @@ class RewardedAdManager(private val adUnitId: String) {
     fun loadAd(activity: Activity) {
         if (isLoading || rewardedAd != null) return
         isLoading = true
+        AnalyticsManager.logEvent("rewarded_load_start")
 
         val adRequest = AdRequest.Builder().build()
         RewardedAd.load(activity, adUnitId, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdLoaded(ad: RewardedAd) {
+                AnalyticsManager.logEvent("rewarded_loaded")
                 rewardedAd = ad
                 isLoading = false
             }
 
             override fun onAdFailedToLoad(error: LoadAdError) {
+                AnalyticsManager.logEvent("rewarded_load_failed", android.os.Bundle().apply {
+                    putString("error", error.message)
+                })
                 rewardedAd = null
                 isLoading = false
             }
         })
     }
 
-    fun showAd(activity: Activity, onReward: (Boolean) -> Unit) {
+    fun showAd(activity: Activity, onRewardEarned: (RewardItem) -> Unit, onDismiss: () -> Unit) {
         if (rewardedAd != null) {
+            AnalyticsManager.logEvent("rewarded_show_start")
             val dialog = AdLoadingDialog(activity)
             dialog.show()
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                rewardedAd?.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                rewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
+                        AnalyticsManager.logEvent("rewarded_dismissed")
                         rewardedAd = null
                         loadAd(activity)
+                        onDismiss()
                     }
 
-                    override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) {
+                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                        AnalyticsManager.logEvent("rewarded_show_failed", android.os.Bundle().apply {
+                            putString("error", error.message)
+                        })
                         rewardedAd = null
-                        onReward(false)
+                        onDismiss()
+                    }
+
+                    override fun onAdClicked() {
+                        AnalyticsManager.logEvent("rewarded_clicked")
                     }
                 }
                 rewardedAd?.show(activity) { rewardItem ->
-                    onReward(true)
+                    AnalyticsManager.logEvent("rewarded_earned", android.os.Bundle().apply {
+                        putString("type", rewardItem.type)
+                        putInt("amount", rewardItem.amount)
+                    })
+                    onRewardEarned(rewardItem)
                 }
-            }, 800)
+            }, 1000)
         } else {
+            AnalyticsManager.logEvent("rewarded_not_loaded")
             loadAd(activity)
-            onReward(false)
+            onDismiss()
         }
     }
 }

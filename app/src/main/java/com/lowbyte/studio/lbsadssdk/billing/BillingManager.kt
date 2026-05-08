@@ -18,6 +18,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
     private var isPro = false
 
     init {
+        AnalyticsManager.logEvent("billing_init")
         startConnection()
     }
 
@@ -25,7 +26,12 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    AnalyticsManager.logEvent("billing_connected")
                     queryPurchases()
+                } else {
+                    AnalyticsManager.logEvent("billing_connection_failed", android.os.Bundle().apply {
+                        putInt("response_code", billingResult.responseCode)
+                    })
                 }
             }
 
@@ -67,6 +73,10 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
 
     fun purchaseProduct(activity: Activity, productId: String, productType: String, onComplete: (Boolean) -> Unit) {
         this.onPurchaseComplete = onComplete
+        AnalyticsManager.logEvent("purchase_attempt", android.os.Bundle().apply {
+            putString("product_id", productId)
+            putString("type", productType)
+        })
         
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
@@ -104,6 +114,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
 
                 billingClient.launchBillingFlow(activity, flowParams)
             } else {
+                AnalyticsManager.logEvent("purchase_failed_no_product")
                 onComplete(false)
             }
         }
@@ -121,11 +132,15 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+            AnalyticsManager.logEvent("purchase_success_list")
             for (purchase in purchases) {
                 handlePurchase(purchase)
             }
             onPurchaseComplete?.invoke(true)
         } else {
+            AnalyticsManager.logEvent("purchase_error_callback", android.os.Bundle().apply {
+                putInt("response_code", billingResult.responseCode)
+            })
             onPurchaseComplete?.invoke(false)
         }
     }

@@ -18,14 +18,19 @@ object AnalyticsManager {
     }
 
     fun logEvent(eventName: String, params: Bundle? = null) {
-        // Firebase
+        // Log to Firebase
         firebaseAnalytics?.logEvent(eventName, params)
 
-        // Mixpanel
+        // Log to Mixpanel (only if initialized)
         mixpanelRef?.get()?.let { mp ->
             val json = JSONObject()
-            params?.keySet()?.forEach { key ->
-                json.put(key, params.get(key))
+            params?.let { bundle ->
+                for (key in bundle.keySet()) {
+                    val value = bundle.get(key)
+                    if (value != null) {
+                        json.put(key, value)
+                    }
+                }
             }
             mp.track(eventName, json)
         }
