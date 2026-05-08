@@ -26,6 +26,7 @@ object AdsManager {
         interstitialManager = InterstitialAdManager(interstitialId)
         rewardedManager = RewardedAdManager(rewardedId)
         appOpenManager = AppOpenAdManager(application, appOpenId)
+        appOpenManager.setBillingManager(billingManager)
         
         adsEnabled = RemoteConfigManager.getBoolean("ads_enabled")
     }
@@ -77,4 +78,7 @@ object AdsManager {
             container.visibility = android.view.View.GONE
         }
     }
+
+    fun getAppOpenManager() = appOpenManager
+    fun getBillingManager() = billingManager
 }

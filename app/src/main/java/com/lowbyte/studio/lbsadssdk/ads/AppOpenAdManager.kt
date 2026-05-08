@@ -14,6 +14,8 @@ import com.google.android.gms.ads.appopen.AppOpenAd
 import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
 import java.util.Date
+import com.lowbyte.studio.lbsadssdk.billing.BillingManager
+import com.lowbyte.studio.lbsadssdk.remote.RemoteConfigManager
 import java.lang.ref.WeakReference
 
 class AppOpenAdManager(
@@ -26,13 +28,21 @@ class AppOpenAdManager(
     private var isShowingAd = false
     private var loadTime: Long = 0
     private var currentActivityRef: WeakReference<Activity>? = null
+    private var billingManager: BillingManager? = null
 
     init {
         application.registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
 
+    fun setBillingManager(manager: BillingManager) {
+        this.billingManager = manager
+    }
+
     fun loadAd() {
+        if (!RemoteConfigManager.getBoolean("ads_on") || !RemoteConfigManager.getBoolean("app_open_on")) return
+        if (billingManager?.isUserPro() == true) return
+        
         if (isLoadingAd || isAdAvailable()) return
         isLoadingAd = true
         AnalyticsManager.logEvent("app_open_load_start")
@@ -48,7 +58,7 @@ class AppOpenAdManager(
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    AnalyticsManager.logEvent("app_open_load_failed", android.os.Bundle().apply {
+                    AnalyticsManager.logEvent("app_open_load_failed", Bundle().apply {
                         putString("error", loadAdError.message)
                     })
                     isLoadingAd = false
@@ -66,10 +76,19 @@ class AppOpenAdManager(
         return dateDifference < numMilliSecondsPerHour * numHours
     }
 
-    fun showAdIfAvailable(activity: Activity) {
+    fun showAdIfAvailable(activity: Activity, onComplete: (() -> Unit)? = null) {
         if (isShowingAd) return
+        
+        if (billingManager?.isUserPro() == true || 
+            !RemoteConfigManager.getBoolean("ads_on") || 
+            !RemoteConfigManager.getBoolean("app_open_on")) {
+            onComplete?.invoke()
+            return
+        }
+
         if (!isAdAvailable()) {
             loadAd()
+            onComplete?.invoke()
             return
         }
 
@@ -84,15 +103,17 @@ class AppOpenAdManager(
                     appOpenAd = null
                     isShowingAd = false
                     loadAd()
+                    onComplete?.invoke()
                 }
 
                 override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                    AnalyticsManager.logEvent("app_open_show_failed", android.os.Bundle().apply {
+                    AnalyticsManager.logEvent("app_open_show_failed", Bundle().apply {
                         putString("error", adError.message)
                     })
                     appOpenAd = null
                     isShowingAd = false
                     loadAd()
+                    onComplete?.invoke()
                 }
 
                 override fun onAdShowedFullScreenContent() {
