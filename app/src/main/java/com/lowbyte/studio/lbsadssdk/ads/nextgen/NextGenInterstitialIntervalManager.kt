@@ -20,7 +20,7 @@ class NextGenInterstitialIntervalManager(
     private val remoteConfigKey: String? = null,
     private val intervalKey: String? = null
 ) {
-    private val TAG = "NextGenInterstitialInterval"
+    private val TAG = "NGAdsManagerInterInterval"
     private var lastShowTime: Long = 0
 
     /**

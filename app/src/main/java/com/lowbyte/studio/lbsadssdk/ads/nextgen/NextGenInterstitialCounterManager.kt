@@ -20,7 +20,7 @@ class NextGenInterstitialCounterManager(
     private val remoteConfigKey: String? = null,
     private val thresholdKey: String? = null
 ) {
-    private val TAG = "NextGenInterstitialCounter"
+    private val TAG = "NGAdsManagerInterCounter"
     private var currentCount = 0
 
     /**

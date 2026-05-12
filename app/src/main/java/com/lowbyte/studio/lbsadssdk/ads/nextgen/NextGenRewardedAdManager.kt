@@ -21,7 +21,7 @@ class NextGenRewardedAdManager(
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null
 ) {
-    private val TAG = "NextGenRewarded"
+    private val TAG = "NGAdsManagerRewarded"
     private var rewardedAd: RewardedAd? = null
     private var isLoading = false
 

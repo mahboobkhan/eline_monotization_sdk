@@ -20,7 +20,7 @@ class NextGenInterstitialAdManager(
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null
 ) {
-    private val TAG = "NextGenInterstitial"
+    private val TAG = "NGAdsManagerInter"
     private var interstitialAd: InterstitialAd? = null
     private var isLoading = false
 

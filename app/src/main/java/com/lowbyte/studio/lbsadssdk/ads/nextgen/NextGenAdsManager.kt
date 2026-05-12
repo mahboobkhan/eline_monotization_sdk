@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * Handles initialization and provides access to specialized ad managers.
  */
 object NextGenAdsManager {
-    private const val TAG = "NextGenAdsManager"
+    private const val TAG = "NGAdsManager"
     private var isInitialized = false
     private lateinit var billingManager: BillingManager
 

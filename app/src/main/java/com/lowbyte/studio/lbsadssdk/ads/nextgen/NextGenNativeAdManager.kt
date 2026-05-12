@@ -29,7 +29,7 @@ class NextGenNativeAdManager(
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null
 ) {
-    private val TAG = "NextGenNativeAd"
+    private val TAG = "NGAdsManagerNativeAd"
     private var currentNativeAd: NativeAd? = null
 
     enum class NativeSize {

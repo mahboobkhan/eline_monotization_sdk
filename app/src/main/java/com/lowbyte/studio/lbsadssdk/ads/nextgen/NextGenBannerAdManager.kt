@@ -25,7 +25,7 @@ class NextGenBannerAdManager(
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null
 ) {
-    private val TAG = "NextGenBannerAd"
+    private val TAG = "NGAdsManagerBannerAd"
     private var bannerAd: BannerAd? = null
 
     interface BannerListener {

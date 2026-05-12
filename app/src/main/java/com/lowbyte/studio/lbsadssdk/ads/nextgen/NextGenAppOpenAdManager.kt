@@ -29,7 +29,7 @@ class NextGenAppOpenAdManager(
     private val remoteConfigKey: String? = "app_open_enabled"
 ) : DefaultLifecycleObserver, Application.ActivityLifecycleCallbacks {
 
-    private val TAG = "NextGenAppOpen"
+    private val TAG = "NGAdsManagerAppOpen"
     private var appOpenAd: AppOpenAd? = null
     private var isLoadingAd = false
     private var isShowingAd = false
