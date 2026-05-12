@@ -53,7 +53,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     // ADS & Utilities
-    implementation(libs.play.services.ads)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)

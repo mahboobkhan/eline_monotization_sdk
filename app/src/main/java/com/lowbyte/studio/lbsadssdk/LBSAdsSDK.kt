@@ -16,7 +16,6 @@ object LBSAdsSDK {
         val appContext = context.applicationContext
 
         FirebaseApp.initializeApp(appContext)
-        MobileAds.initialize(appContext) {}
         
         mixpanelToken?.let {
             val mp = MixpanelAPI.getInstance(appContext, it, true)
