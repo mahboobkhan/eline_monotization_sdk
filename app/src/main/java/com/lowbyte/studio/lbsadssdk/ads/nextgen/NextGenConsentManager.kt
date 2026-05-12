@@ -8,6 +8,7 @@ import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
+import androidx.core.content.edit
 
 /**
  * Manager for GDPR/UMP Consent.
@@ -43,7 +44,7 @@ object NextGenConsentManager {
         // 2. Check if country requires consent (Skip if in debug mode)
         if (!debug && !isConsentRequired(activity)) {
             Log.d(TAG, "Consent not required for this country. Marking as resolved.")
-            prefs.edit().putBoolean(KEY_CONSENT_RESOLVED, true).apply()
+            prefs.edit { putBoolean(KEY_CONSENT_RESOLVED, true) }
             onComplete(true)
             return
         }
@@ -82,7 +83,7 @@ object NextGenConsentManager {
                     val resolved = canRequestAds()
                     if (resolved) {
                         Log.d(TAG, "Consent resolved successfully.")
-                        prefs.edit().putBoolean(KEY_CONSENT_RESOLVED, true).apply()
+                        prefs.edit { putBoolean(KEY_CONSENT_RESOLVED, true) }
                     }
                     onComplete(canRequestAds())
                 }
