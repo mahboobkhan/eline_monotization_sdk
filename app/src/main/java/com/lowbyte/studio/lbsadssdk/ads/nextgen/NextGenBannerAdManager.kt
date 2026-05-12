@@ -202,6 +202,60 @@ class NextGenBannerAdManager(
     }
 
     /**
+     * Checks if a banner ad is currently preloaded and ready.
+     */
+    fun isAdLoaded(): Boolean {
+        return bannerAd != null
+    }
+
+    /**
+     * Shows the preloaded banner ad in the provided container.
+     */
+    fun showPreloadedBanner(activity: Activity, container: ViewGroup, listener: BannerListener? = null) {
+        val ad = bannerAd
+        if (ad == null) {
+            Log.e(TAG, "No preloaded banner ad found.")
+            container.visibility = android.view.View.GONE
+            return
+        }
+
+        // Set callbacks (similar to loadAndShowBanner)
+        ad.adEventCallback = object : BannerAdEventCallback {
+            override fun onAdImpression() {
+                Log.d(TAG, "Preloaded Banner ad recorded an impression.")
+                listener?.onAdImpression()
+            }
+
+            override fun onAdClicked() {
+                Log.d(TAG, "Preloaded Banner ad clicked.")
+                listener?.onAdClicked()
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                Log.d(TAG, "Preloaded Banner ad showed full screen content.")
+                listener?.onAdShowed()
+            }
+
+            override fun onAdDismissedFullScreenContent() {
+                Log.d(TAG, "Preloaded Banner ad dismissed full screen content.")
+                listener?.onAdDismissed()
+            }
+
+            override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+                Log.e(TAG, "Preloaded Banner ad failed to show: $error")
+                listener?.onAdFailedToShow(error.toString())
+            }
+        }
+
+        activity.runOnUiThread {
+            container.removeAllViews()
+            container.addView(ad.getView(activity))
+            container.visibility = android.view.View.VISIBLE
+            Log.d(TAG, "Preloaded Banner ad added to container.")
+        }
+    }
+
+    /**
      * Destroys the current banner ad.
      */
     fun destroy(container: ViewGroup? = null) {

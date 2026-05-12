@@ -1,7 +1,7 @@
 package com.lowbyte.studio.lbsadssdk.ads
 
 import android.app.Activity
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -18,8 +18,17 @@ import com.google.android.gms.ads.nativead.NativeAdView
 import com.lowbyte.studio.lbsadssdk.R
 import com.lowbyte.studio.lbsadssdk.analytics.AnalyticsManager
 
+/**
+ * Legacy Native Manager with Preloading support.
+ */
 class NativeAdManager(private val adUnitId: String) {
+    private var preloadedNativeAd: NativeAd? = null
+    private var isLoading = false
+    private val TAG = "NativeAdManager"
 
+    /**
+     * Loads a native ad and shows it immediately.
+     */
     fun loadNativeAd(activity: Activity, container: ViewGroup, layoutResId: Int) {
         AnalyticsManager.logEvent("native_load_start")
         // Show Shimmer
@@ -44,15 +53,62 @@ class NativeAdManager(private val adUnitId: String) {
                     container.removeAllViews()
                     container.visibility = View.GONE
                 }
-
-                override fun onAdClicked() {
-                    AnalyticsManager.logEvent("native_clicked")
-                }
             })
             .withNativeAdOptions(NativeAdOptions.Builder().build())
             .build()
 
         adLoader.loadAd(AdRequest.Builder().build())
+    }
+
+    /**
+     * Pre-fetches a native ad in the background.
+     */
+    fun prefetchNativeAd(activity: Activity) {
+        if (isLoading || preloadedNativeAd != null) return
+        isLoading = true
+
+        val adLoader = AdLoader.Builder(activity.applicationContext, adUnitId)
+            .forNativeAd { nativeAd ->
+                Log.d(TAG, "Native ad pre-fetched.")
+                preloadedNativeAd = nativeAd
+                isLoading = false
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.e(TAG, "Native pre-fetch failed: ${error.message}")
+                    isLoading = false
+                    preloadedNativeAd = null
+                }
+            })
+            .build()
+
+        adLoader.loadAd(AdRequest.Builder().build())
+    }
+
+    fun isLoaded(): Boolean = preloadedNativeAd != null
+
+    /**
+     * Populates the container with the preloaded native ad.
+     */
+    fun showPreloadedNativeAd(activity: Activity, container: ViewGroup, layoutResId: Int) {
+        val nativeAd = preloadedNativeAd
+        if (nativeAd != null) {
+            val adView = activity.layoutInflater.inflate(layoutResId, null) as NativeAdView
+            populateNativeAdView(nativeAd, adView)
+            container.removeAllViews()
+            container.addView(adView)
+            container.visibility = View.VISIBLE
+            Log.d(TAG, "Pre-fetched native ad added to container.")
+            AnalyticsManager.logAdImpression(adUnitId, "Native_Preloaded")
+            
+            // Note: In legacy SDK, it's often better to load a fresh one after use 
+            // or keep it if it's reusable. We'll clear it for now.
+            preloadedNativeAd = null
+            prefetchNativeAd(activity)
+        } else {
+            container.visibility = View.GONE
+            prefetchNativeAd(activity)
+        }
     }
 
     private fun populateNativeAdView(nativeAd: NativeAd, adView: NativeAdView) {

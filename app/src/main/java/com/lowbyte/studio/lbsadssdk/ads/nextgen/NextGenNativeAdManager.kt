@@ -183,6 +183,70 @@ class NextGenNativeAdManager(
     }
 
     /**
+     * Preloads a native ad.
+     */
+    fun preloadAd() {
+        val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
+        val adRequest = NativeAdRequest
+            .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
+            .build()
+
+        val adCallback = object : NativeAdLoaderCallback {
+            override fun onNativeAdLoaded(nativeAd: NativeAd) {
+                Log.d(TAG, "Native ad preloaded.")
+                currentNativeAd?.destroy()
+                currentNativeAd = nativeAd
+            }
+
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e(TAG, "Native ad preloading failed: $adError")
+            }
+        }
+
+        NativeAdLoader.load(adRequest, adCallback)
+    }
+
+    /**
+     * Checks if a native ad is preloaded.
+     */
+    fun isAdLoaded(): Boolean {
+        return currentNativeAd != null
+    }
+
+    /**
+     * Shows a preloaded native ad in the container.
+     */
+    fun showPreloadedNativeAd(
+        activity: Activity,
+        container: ViewGroup,
+        size: NativeSize = NativeSize.MEDIUM,
+        customLayout: Int? = null
+    ) {
+        val ad = currentNativeAd
+        if (ad == null) {
+            Log.e(TAG, "No preloaded native ad found.")
+            container.visibility = View.GONE
+            return
+        }
+
+        activity.runOnUiThread {
+            val layoutRes = customLayout ?: when (size) {
+                NativeSize.SMALL -> R.layout.layout_native_small
+                NativeSize.MEDIUM -> R.layout.layout_native_medium
+                NativeSize.LARGE -> R.layout.layout_native_large
+            }
+
+            val adView = LayoutInflater.from(activity).inflate(layoutRes, null) as NativeAdView
+            displayNativeAd(ad, adView)
+            
+            container.removeAllViews()
+            container.addView(adView)
+            container.visibility = View.VISIBLE
+            Log.d(TAG, "Preloaded Native ad added to container.")
+        }
+    }
+
+    /**
      * Clean up resources.
      */
     fun destroy() {

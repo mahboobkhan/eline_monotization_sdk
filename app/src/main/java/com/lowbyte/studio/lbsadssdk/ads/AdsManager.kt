@@ -16,6 +16,8 @@ object AdsManager {
     private lateinit var rewardedManager: RewardedAdManager
     private lateinit var appOpenManager: AppOpenAdManager
     private lateinit var billingManager: BillingManager
+    private var globalBannerManager: BannerAdManager? = null
+    private var globalNativeManager: NativeAdManager? = null
 
     var adsEnabled = true
 
@@ -86,7 +88,12 @@ object AdsManager {
     fun showBanner(activity: Activity, container: ViewGroup) {
         if (canShowAds(activity)) {
             val bannerId = AdIds.getBannerId(RemoteConfigManager.getString("banner_id"))
-            BannerAdManager(bannerId).loadBanner(activity, container)
+            val manager = globalBannerManager ?: BannerAdManager(bannerId)
+            if (manager.isLoaded()) {
+                manager.addBannerToContainer(container)
+            } else {
+                manager.loadBanner(activity, container)
+            }
         } else {
             container.removeAllViews()
             container.visibility = android.view.View.GONE
@@ -96,11 +103,31 @@ object AdsManager {
     fun showNative(activity: Activity, container: ViewGroup, layoutResId: Int) {
         if (canShowAds(activity)) {
             val nativeId = AdIds.getNativeId(RemoteConfigManager.getString("native_id"))
-            NativeAdManager(nativeId).loadNativeAd(activity, container, layoutResId)
+            val manager = globalNativeManager ?: NativeAdManager(nativeId)
+            if (manager.isLoaded()) {
+                manager.showPreloadedNativeAd(activity, container, layoutResId)
+            } else {
+                manager.loadNativeAd(activity, container, layoutResId)
+            }
         } else {
             container.removeAllViews()
             container.visibility = android.view.View.GONE
         }
+    }
+
+    /**
+     * Prefetches banner and native ads globally.
+     */
+    fun prefetchAds(activity: Activity) {
+        if (!canShowAds(activity)) return
+        
+        val bannerId = AdIds.getBannerId(RemoteConfigManager.getString("banner_id"))
+        globalBannerManager = BannerAdManager(bannerId)
+        globalBannerManager?.prefetchBanner(activity)
+
+        val nativeId = AdIds.getNativeId(RemoteConfigManager.getString("native_id"))
+        globalNativeManager = NativeAdManager(nativeId)
+        globalNativeManager?.prefetchNativeAd(activity)
     }
 
     fun getAppOpenManager() = appOpenManager

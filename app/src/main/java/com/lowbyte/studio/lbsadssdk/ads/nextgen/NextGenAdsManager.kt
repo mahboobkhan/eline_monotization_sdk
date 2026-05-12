@@ -129,6 +129,20 @@ object NextGenAdsManager {
     }
 
     /**
+     * Preloads a Banner ad using the global singleton access.
+     */
+    fun preloadBanner(activity: android.app.Activity, adUnitId: String, width: Int = 320) {
+        getBannerManager(adUnitId).preloadAdaptiveBanner(activity, width)
+    }
+
+    /**
+     * Preloads a Native ad using the global singleton access.
+     */
+    fun preloadNative(adUnitId: String) {
+        getNativeAdManager(adUnitId).preloadAd()
+    }
+
+    /**
      * Creates a new Rewarded manager with optional configuration.
      */
     fun getRewardedManager(
