@@ -32,7 +32,7 @@ class SplashActivity : AppCompatActivity() {
             // SDK Initialized
             
             // 2. Gather GDPR Consent before any ad request
-            NextGenConsentManager.gatherConsent(this) { resolved ->
+            NextGenConsentManager.gatherConsent(this, debug = com.lowbyte.studio.lbsadssdk.BuildConfig.DEBUG) { resolved ->
                 if (resolved) {
                     // Consent resolved (or not required) - Proceed with ads
                     
