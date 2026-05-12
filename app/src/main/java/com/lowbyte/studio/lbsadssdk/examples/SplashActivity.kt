@@ -35,7 +35,7 @@ class SplashActivity : AppCompatActivity() {
             // 3. Initialize and load App Open Ad
             val appOpenManager = NextGenAdsManager.getAppOpenAdManager(
                 application = application ?: (applicationContext as android.app.Application),
-                adUnitId = "ca-app-pub-3940256099942544/9257395915"
+                adUnitId = "ca-app-pub-3940256099942544/9257395921"
             )
             appOpenManager.loadAd()
             

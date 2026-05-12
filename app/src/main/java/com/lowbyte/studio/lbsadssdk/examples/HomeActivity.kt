@@ -2,6 +2,7 @@ package com.lowbyte.studio.lbsadssdk.examples
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +14,7 @@ import com.lowbyte.studio.lbsadssdk.ads.nextgen.NextGenNativeAdManager
  * Example Home Activity demonstrating Banner and Native ads.
  */
 class HomeActivity : AppCompatActivity() {
-
+    val TAG = "NGAdsManagerExample"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_example)

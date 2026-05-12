@@ -138,6 +138,35 @@ class NextGenBannerAdManager(
 
     fun isAdLoaded(): Boolean = bannerAd != null
 
+    fun preloadAdaptiveBanner(
+        activity: Activity,
+        width: Int,
+        orientation: String = "current",
+        listener: NextGenAdListener? = null
+    ) {
+        val adSize = when (orientation) {
+            "portrait" -> AdSize.getPortraitInlineAdaptiveBannerAdSize(activity, width)
+            "landscape" -> AdSize.getLandscapeInlineAdaptiveBannerAdSize(activity, width)
+            else -> AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(activity, width)
+        }
+
+        val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/9214589741"
+        val adRequest = BannerAdRequest.Builder(finalAdUnitId, adSize).build()
+
+        activity.runOnUiThread {
+            val adView = AdView(activity)
+            adView.loadAd(adRequest, object : AdLoadCallback<BannerAd> {
+                override fun onAdLoaded(ad: BannerAd) {
+                    bannerAd = ad
+                    listener?.onAdLoaded(finalAdUnitId)
+                }
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
+                }
+            })
+        }
+    }
+
     fun destroy() {
         bannerAd?.destroy()
         bannerAd = null

@@ -24,14 +24,32 @@ class NextGenInterstitialIntervalManager(
     private var lastShowTime: Long = 0
 
     /**
-     * Starts preloading ads for this ad unit.
+     * Starts preloading ads for this ad unit with success/failure logging.
      */
-    fun startPreloading(customAdUnitId: String? = null) {
+    fun startPreloading(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
         val finalAdUnitId = customAdUnitId ?: adUnitId
         val adRequest = AdRequest.Builder(finalAdUnitId).build()
         val preloadConfig = PreloadConfiguration(adRequest)
-        InterstitialAdPreloader.start(finalAdUnitId, preloadConfig)
-        Log.d(TAG, "Started preloading for: $finalAdUnitId")
+        
+        Log.d(TAG, "Initiating preload request for: $finalAdUnitId")
+        
+        // Use a one-time load to provide immediate feedback/logging
+        com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd.load(
+            adRequest,
+            object : com.google.android.libraries.ads.mobile.sdk.common.AdLoadCallback<com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd> {
+                override fun onAdLoaded(ad: com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd) {
+                    Log.d(TAG, "Preload Success: Ad cached for $finalAdUnitId")
+                    listener?.onAdLoaded(finalAdUnitId)
+                    // Once verified, let the global preloader take over for future refills
+                    InterstitialAdPreloader.start(finalAdUnitId, preloadConfig)
+                }
+
+                override fun onAdFailedToLoad(error: com.google.android.libraries.ads.mobile.sdk.common.LoadAdError) {
+                    Log.e(TAG, "Preload Failed for $finalAdUnitId: ${error.message} (Code: ${error.code})")
+                    listener?.onAdFailedToLoad(finalAdUnitId, error.toString())
+                }
+            }
+        )
     }
 
     /**

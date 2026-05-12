@@ -152,6 +152,29 @@ class NextGenNativeAdManager(
         adView.registerNativeAd(nativeAd, mediaView)
     }
 
+    fun preloadAd(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
+        val adRequest = NativeAdRequest
+            .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
+            .build()
+
+        val adCallback = object : NativeAdLoaderCallback {
+            override fun onNativeAdLoaded(nativeAd: NativeAd) {
+                Log.d(TAG, "Native ad preloaded: $finalAdUnitId")
+                currentNativeAd?.destroy()
+                currentNativeAd = nativeAd
+                listener?.onAdLoaded(finalAdUnitId)
+            }
+
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e(TAG, "Native ad preloading failed: ${adError.message}")
+                listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
+            }
+        }
+
+        NativeAdLoader.load(adRequest, adCallback)
+    }
+
     fun destroy() {
         currentNativeAd?.destroy()
         currentNativeAd = null

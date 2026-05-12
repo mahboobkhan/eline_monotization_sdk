@@ -13,7 +13,24 @@ object RemoteConfigManager {
         val configSettings = FirebaseRemoteConfigSettings.Builder()
             .setMinimumFetchIntervalInSeconds(if (BuildConfig.DEBUG) 0 else 3600)
             .build()
-        remoteConfigRef.get()?.setConfigSettingsAsync(configSettings)
+        
+        val defaults = mapOf(
+            "ads_enabled" to true,
+            "banner_enabled" to true,
+            "interstitial_enabled" to true,
+            "interstitial_counter_enabled" to true,
+            "interstitial_interval_enabled" to true,
+            "rewarded_enabled" to true,
+            "native_enabled" to true,
+            "app_open_enabled" to true,
+            "interstitial_threshold" to 2L,
+            "interstitial_interval" to 60L
+        )
+        
+        remoteConfigRef.get()?.apply {
+            setConfigSettingsAsync(configSettings)
+            setDefaultsAsync(defaults)
+        }
     }
 
     fun fetchAndActivate(onComplete: (Boolean) -> Unit) {
