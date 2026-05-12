@@ -84,11 +84,14 @@ object NextGenConsentManager {
                         Log.d(TAG, "Consent resolved successfully.")
                         prefs.edit().putBoolean(KEY_CONSENT_RESOLVED, true).apply()
                     }
-                    onComplete(resolved)
+                    onComplete(canRequestAds())
                 }
             },
             { requestError ->
-                Log.e(TAG, "Consent update request failed: ${requestError.message}")
+                Log.e(TAG, "Consent update request failed: [${requestError.errorCode}] ${requestError.message}")
+                if (requestError.errorCode == 3) {
+                    Log.e(TAG, "TIP: A '3' error code often means a network issue or missing Test Device Hashed ID for debug mode.")
+                }
                 onComplete(canRequestAds())
             }
         )

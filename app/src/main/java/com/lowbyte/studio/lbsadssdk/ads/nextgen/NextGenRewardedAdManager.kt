@@ -109,6 +109,7 @@ class NextGenRewardedAdManager(
         delayMs: Long = 500,
         reloadOnDismiss: Boolean = true,
         isFragment: Boolean = false,
+        dialogStyle: AdLoadingDialog.Style = AdLoadingDialog.Style.SMALL,
         listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
@@ -156,7 +157,7 @@ class NextGenRewardedAdManager(
         }
 
         if (showDialog) {
-            val dialog = AdLoadingDialog(activity)
+            val dialog = AdLoadingDialog(activity, dialogStyle)
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()

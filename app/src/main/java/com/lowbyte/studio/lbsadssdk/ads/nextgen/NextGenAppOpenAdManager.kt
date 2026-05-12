@@ -108,6 +108,7 @@ class NextGenAppOpenAdManager(
         delayMs: Long = 500,
         reloadOnDismiss: Boolean = true,
         isFragment: Boolean = false,
+        dialogStyle: AdLoadingDialog.Style = AdLoadingDialog.Style.FULLSCREEN,
         listener: NextGenAdListener? = null,
         onComplete: (() -> Unit)? = null
     ) {
@@ -127,7 +128,7 @@ class NextGenAppOpenAdManager(
         Log.d(TAG, "Showing App Open ad...")
 
         if (showDialog) {
-            val dialog = AdLoadingDialog(activity)
+            val dialog = AdLoadingDialog(activity, dialogStyle)
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()

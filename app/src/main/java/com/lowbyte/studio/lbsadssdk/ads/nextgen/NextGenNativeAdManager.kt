@@ -59,7 +59,8 @@ class NextGenNativeAdManager(
         }
 
         if (!NextGenConsentManager.canRequestAds(activity)) {
-            Log.w(TAG, "Native: First Resolve Consent then Try to load Ads.")
+            val status = if (com.google.android.ump.UserMessagingPlatform.getConsentInformation(activity).consentStatus == com.google.android.ump.ConsentInformation.ConsentStatus.REQUIRED) "REQUIRED" else "UNKNOWN/FAILED"
+            Log.w(TAG, "Native: First Resolve Consent then Try to load Ads. Current Status: $status")
             container.visibility = View.GONE
             return
         }

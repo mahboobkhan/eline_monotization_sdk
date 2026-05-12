@@ -53,7 +53,7 @@ class SplashActivity : AppCompatActivity() {
                             startActivity(intent)
                             finish()
                         }
-                    }, 3000)
+                    }, 8000)
                 } else {
                     Log.e("SplashActivity", "Consent not resolved. Ads will not be loaded.")
                     // Still move to Home so the user isn't stuck
