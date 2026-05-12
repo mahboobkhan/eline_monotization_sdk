@@ -51,7 +51,9 @@ object NextGenAdsManager {
             MobileAds.initialize(context, config) {
                 Log.d(TAG, "Adapter initialization complete.")
                 isInitialized = true
-                onComplete?.invoke()
+                CoroutineScope(Dispatchers.Main).launch {
+                    onComplete?.invoke()
+                }
             }
             
             Log.d(TAG, "MobileAds.initialize called.")

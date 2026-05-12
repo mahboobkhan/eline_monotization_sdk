@@ -25,7 +25,7 @@
         </service>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".examples.SplashActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.LBSAdsSDK"
@@ -36,6 +36,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".examples.HomeActivity"
+            android:exported="false"
+            android:label="Home"
+            android:theme="@style/Theme.LBSAdsSDK" />
+
+        <activity
+            android:name=".examples.SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:theme="@style/Theme.LBSAdsSDK" />
     </application>
 
 </manifest>
