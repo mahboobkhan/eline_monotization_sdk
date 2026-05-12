@@ -21,10 +21,11 @@ import java.util.Date
 
 /**
  * Manager for App Open Ads using the GMA Next-Gen SDK.
+ * Standardized parameters and context-aware dismissal logic.
  */
 class NextGenAppOpenAdManager(
     private val application: Application,
-    private val adUnitId: String,
+    private var adUnitId: String,
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = "app_open_enabled"
 ) : DefaultLifecycleObserver, Application.ActivityLifecycleCallbacks {
@@ -46,36 +47,45 @@ class NextGenAppOpenAdManager(
     /**
      * Loads an App Open ad.
      */
-    fun loadAd() {
+    fun loadAd(
+        customAdUnitId: String? = null,
+        customRemoteConfigKey: String? = null,
+        listener: NextGenAdListener? = null
+    ) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId
+        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+
         if (billingManager?.isUserPro() == true) {
             Log.d(TAG, "App Open: User is Pro, ads suppressed.")
             return
         }
         
-        val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
-            Log.d(TAG, "App Open disabled by Remote Config (key: $remoteConfigKey)")
+            Log.d(TAG, "App Open disabled by Remote Config (key: $finalRemoteKey)")
             return
         }
 
         if (isLoadingAd || isAdAvailable()) return
 
         isLoadingAd = true
-        Log.d(TAG, "Loading App Open ad: $adUnitId")
+        Log.d(TAG, "Loading App Open ad: $finalAdUnitId")
         
-        val adRequest = AdRequest.Builder(adUnitId).build()
+        val adRequest = AdRequest.Builder(finalAdUnitId).build()
 
         AppOpenAd.load(adRequest, object : AdLoadCallback<AppOpenAd> {
             override fun onAdLoaded(ad: AppOpenAd) {
-                Log.i(TAG, "App Open ad loaded.")
+                Log.i(TAG, "App Open ad loaded: $finalAdUnitId")
                 appOpenAd = ad
                 isLoadingAd = false
                 loadTime = Date().time
+                listener?.onAdLoaded(finalAdUnitId)
             }
 
             override fun onAdFailedToLoad(error: LoadAdError) {
-                Log.e(TAG, "App Open ad failed to load: $error")
+                Log.e(TAG, "App Open ad failed to load: ${error.message}")
                 isLoadingAd = false
+                listener?.onAdFailedToLoad(finalAdUnitId, error.toString())
             }
         })
     }
@@ -91,6 +101,9 @@ class NextGenAppOpenAdManager(
         activity: Activity,
         showDialog: Boolean = true,
         delayMs: Long = 500,
+        reloadOnDismiss: Boolean = true,
+        isFragment: Boolean = false,
+        listener: NextGenAdListener? = null,
         onComplete: (() -> Unit)? = null
     ) {
         if (isShowingAd) return
@@ -101,7 +114,7 @@ class NextGenAppOpenAdManager(
         }
 
         if (!isAdAvailable()) {
-            loadAd()
+            loadAd(listener = listener)
             onComplete?.invoke()
             return
         }
@@ -113,42 +126,57 @@ class NextGenAppOpenAdManager(
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                showActualAd(activity, onComplete)
+                showActualAd(activity, reloadOnDismiss, isFragment, listener, onComplete)
             }, delayMs)
         } else {
-            showActualAd(activity, onComplete)
+            showActualAd(activity, reloadOnDismiss, isFragment, listener, onComplete)
         }
     }
 
-    private fun showActualAd(activity: Activity, onComplete: (() -> Unit)?) {
+    private fun showActualAd(
+        activity: Activity,
+        reloadOnDismiss: Boolean,
+        isFragment: Boolean,
+        listener: NextGenAdListener?,
+        onComplete: (() -> Unit)?
+    ) {
+        val finalAdUnitId = adUnitId
         appOpenAd?.adEventCallback = object : AppOpenAdEventCallback {
             override fun onAdDismissedFullScreenContent() {
                 Log.d(TAG, "App Open ad dismissed.")
                 appOpenAd = null
                 isShowingAd = false
-                loadAd()
-                onComplete?.invoke()
+                listener?.onAdDismissed(finalAdUnitId)
+                if (reloadOnDismiss) loadAd(listener = listener)
+                if (!isFragment) onComplete?.invoke()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
-                Log.e(TAG, "App Open ad failed to show: $error")
+                Log.e(TAG, "App Open ad failed to show: ${error.message}")
                 appOpenAd = null
                 isShowingAd = false
-                loadAd()
+                listener?.onAdFailedToShow(finalAdUnitId, error.toString())
                 onComplete?.invoke()
             }
 
             override fun onAdShowedFullScreenContent() {
                 Log.d(TAG, "App Open ad showed.")
                 isShowingAd = true
+                listener?.onAdShowed(finalAdUnitId)
             }
             
             override fun onAdClicked() {
                 Log.d(TAG, "App Open ad clicked.")
+                listener?.onAdClicked(finalAdUnitId)
             }
             
             override fun onAdImpression() {
                 Log.d(TAG, "App Open ad impression.")
+                listener?.onAdImpression(finalAdUnitId)
+                if (isFragment) {
+                    Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
+                    onComplete?.invoke()
+                }
             }
         }
         appOpenAd?.show(activity)

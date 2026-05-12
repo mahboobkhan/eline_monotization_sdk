@@ -12,10 +12,10 @@ import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
 
 /**
  * Counter-based Interstitial Ad Manager for Next-Gen SDK.
- * Shows ad only after a certain threshold is reached.
+ * Supports threshold-based display and immediate display options.
  */
 class NextGenInterstitialCounterManager(
-    private val adUnitId: String,
+    private var adUnitId: String,
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null,
     private val thresholdKey: String? = null
@@ -26,29 +26,41 @@ class NextGenInterstitialCounterManager(
     /**
      * Starts preloading ads for this ad unit.
      */
-    fun startPreloading() {
-        val adRequest = AdRequest.Builder(adUnitId).build()
+    fun startPreloading(customAdUnitId: String? = null) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId
+        val adRequest = AdRequest.Builder(finalAdUnitId).build()
         val preloadConfig = PreloadConfiguration(adRequest)
-        InterstitialAdPreloader.start(adUnitId, preloadConfig)
-        Log.d(TAG, "Started preloading for: $adUnitId")
+        InterstitialAdPreloader.start(finalAdUnitId, preloadConfig)
+        Log.d(TAG, "Started preloading for: $finalAdUnitId")
     }
 
     /**
-     * Shows the ad if threshold is reached and ad is available.
+     * Shows the ad if threshold is reached or if startCounting is false.
      * 
      * @param activity The activity context.
      * @param threshold Number of times showAd must be called before showing.
-     * @param showDialog Whether to show a loading dialog.
-     * @param delayMs Delay for the loading dialog.
-     * @param onDismiss Callback when ad is dismissed or skipped.
+     * @param startCounting If false, shows ad immediately without checking counter.
+     * @param startDelay If false, shows ad immediately without dialog delay.
+     * @param reloadOnDismiss If true, starts preloading next ad after dismiss.
+     * @param isFragment If true, calls onDismiss callback on onAdImpression instead of onAdDismissed.
+     * @param listener Optional listener for ad events.
+     * @param onDismiss Callback when ad process is complete.
      */
     fun showAd(
         activity: Activity,
+        customAdUnitId: String? = null,
+        customRemoteConfigKey: String? = null,
         threshold: Int = 2,
-        showDialog: Boolean = true,
-        delayMs: Long = 500,
+        startCounting: Boolean = true,
+        startDelay: Boolean = true,
+        reloadOnDismiss: Boolean = true,
+        isFragment: Boolean = false,
+        listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId
+        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
             Log.d(TAG, "Interstitial Counter: User is Pro, ads suppressed.")
@@ -57,73 +69,88 @@ class NextGenInterstitialCounterManager(
         }
 
         // 2. Remote check
-        val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
-            Log.d(TAG, "Interstitial Counter disabled by Remote Config (key: $remoteConfigKey)")
+            Log.d(TAG, "Interstitial Counter disabled by Remote Config (key: $finalRemoteKey)")
             onDismiss()
             return
         }
 
-        // 3. Increment counter
-        currentCount++
-        
-        val finalThreshold = if (thresholdKey != null) {
-            val remoteVal = RemoteConfigManager.getLong(thresholdKey).toInt()
-            if (remoteVal > 0) remoteVal else threshold
+        // 3. Handle Counting
+        if (startCounting) {
+            currentCount++
+            val finalThreshold = if (thresholdKey != null) {
+                val remoteVal = RemoteConfigManager.getLong(thresholdKey).toInt()
+                if (remoteVal > 0) remoteVal else threshold
+            } else {
+                threshold
+            }
+
+            Log.d(TAG, "Current count: $currentCount, Threshold: $finalThreshold")
+
+            if (currentCount < finalThreshold) {
+                Log.d(TAG, "Threshold not reached.")
+                onDismiss()
+                return
+            }
         } else {
-            threshold
-        }
-
-        Log.d(TAG, "Current count: $currentCount, Threshold: $finalThreshold")
-
-        if (currentCount < finalThreshold) {
-            Log.d(TAG, "Threshold not reached.")
-            onDismiss()
-            return
+            Log.d(TAG, "startCounting is false, showing ad immediately.")
         }
 
         // 4. Poll for ad
-        val interstitialAd = InterstitialAdPreloader.pollAd(adUnitId)
+        val interstitialAd = InterstitialAdPreloader.pollAd(finalAdUnitId)
         if (interstitialAd != null) {
             Log.d(TAG, "Ad found in preloader. Showing...")
+            listener?.onAdLoaded(finalAdUnitId)
             
             interstitialAd.adEventCallback = object : InterstitialAdEventCallback {
                 override fun onAdDismissedFullScreenContent() {
                     Log.d(TAG, "Ad dismissed. Resetting counter.")
                     currentCount = 0
-                    onDismiss()
+                    listener?.onAdDismissed(finalAdUnitId)
+                    if (reloadOnDismiss) startPreloading(finalAdUnitId)
+                    if (!isFragment) onDismiss()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(fullScreenContentError: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
-                    Log.e(TAG, "Ad failed to show: $fullScreenContentError")
+                override fun onAdFailedToShowFullScreenContent(error: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
+                    Log.e(TAG, "Ad failed to show: ${error.message}")
+                    listener?.onAdFailedToShow(finalAdUnitId, error.toString())
                     onDismiss()
                 }
 
                 override fun onAdShowedFullScreenContent() {
                     Log.d(TAG, "Ad showed.")
+                    listener?.onAdShowed(finalAdUnitId)
                 }
 
                 override fun onAdClicked() {
                     Log.d(TAG, "Ad clicked.")
+                    listener?.onAdClicked(finalAdUnitId)
                 }
                 
                 override fun onAdImpression() {
                     Log.d(TAG, "Ad impression.")
+                    listener?.onAdImpression(finalAdUnitId)
+                    if (isFragment) {
+                        Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
+                        onDismiss()
+                    }
                 }
             }
 
-            if (showDialog) {
+            if (startDelay) {
                 val dialog = AdLoadingDialog(activity)
                 dialog.show()
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     dialog.dismiss()
                     interstitialAd.show(activity)
-                }, delayMs)
+                }, 500)
             } else {
                 interstitialAd.show(activity)
             }
         } else {
             Log.w(TAG, "Ad not available in preloader yet.")
+            listener?.onAdFailedToLoad(finalAdUnitId, "Ad not available in preloader")
             onDismiss()
         }
     }

@@ -12,10 +12,10 @@ import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
 
 /**
  * Interval-based Interstitial Ad Manager for Next-Gen SDK.
- * Shows ad only after a certain time interval has passed.
+ * Shows ad only after a certain time interval has passed or if startDelay is false.
  */
 class NextGenInterstitialIntervalManager(
-    private val adUnitId: String,
+    private var adUnitId: String,
     private val billingManager: BillingManager? = null,
     private val remoteConfigKey: String? = null,
     private val intervalKey: String? = null
@@ -26,102 +26,130 @@ class NextGenInterstitialIntervalManager(
     /**
      * Starts preloading ads for this ad unit.
      */
-    fun startPreloading() {
-        val adRequest = AdRequest.Builder(adUnitId).build()
+    fun startPreloading(customAdUnitId: String? = null) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId
+        val adRequest = AdRequest.Builder(finalAdUnitId).build()
         val preloadConfig = PreloadConfiguration(adRequest)
-        InterstitialAdPreloader.start(adUnitId, preloadConfig)
-        Log.d(TAG, "Started preloading for: $adUnitId")
+        InterstitialAdPreloader.start(finalAdUnitId, preloadConfig)
+        Log.d(TAG, "Started preloading for: $finalAdUnitId")
     }
 
     /**
-     * Shows the ad if interval has passed and ad is available.
+     * Shows the ad if interval has passed or if startDelay is false.
      * 
      * @param activity The activity context.
      * @param intervalSeconds Minimum time in seconds between ads.
-     * @param showDialog Whether to show a loading dialog.
-     * @param delayMs Delay for the loading dialog.
-     * @param onDismiss Callback when ad is dismissed or skipped.
+     * @param startDelay If false, shows ad immediately without checking interval or showing dialog.
+     * @param reloadOnDismiss If true, starts preloading next ad after dismiss.
+     * @param isFragment If true, calls onDismiss callback on onAdImpression instead of onAdDismissed.
+     * @param listener Optional listener for ad events.
+     * @param onDismiss Callback when ad process is complete.
      */
     fun showAd(
         activity: Activity,
+        customAdUnitId: String? = null,
+        customRemoteConfigKey: String? = null,
         intervalSeconds: Long = 60,
-        showDialog: Boolean = true,
-        delayMs: Long = 500,
+        startDelay: Boolean = true,
+        reloadOnDismiss: Boolean = true,
+        isFragment: Boolean = false,
+        listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId
+        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Interstitial Interval: User is Pro, ads suppressed.")
             onDismiss()
             return
         }
 
         // 2. Remote check
-        val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
+            Log.d(TAG, "Interstitial Interval disabled by Remote Config (key: $finalRemoteKey)")
             onDismiss()
             return
         }
 
         // 3. Interval check
-        val finalInterval = if (intervalKey != null) {
-            val remoteVal = RemoteConfigManager.getLong(intervalKey)
-            if (remoteVal > 0) remoteVal else intervalSeconds
+        if (startDelay) {
+            val finalInterval = if (intervalKey != null) {
+                val remoteVal = RemoteConfigManager.getLong(intervalKey)
+                if (remoteVal > 0) remoteVal else intervalSeconds
+            } else {
+                intervalSeconds
+            }
+
+            val currentTime = System.currentTimeMillis()
+            val timePassed = (currentTime - lastShowTime) / 1000
+            Log.d(TAG, "Time passed: $timePassed s, Required: $finalInterval s")
+
+            if (timePassed < finalInterval) {
+                Log.d(TAG, "Interval not reached.")
+                onDismiss()
+                return
+            }
         } else {
-            intervalSeconds
-        }
-
-        val currentTime = System.currentTimeMillis()
-        val timePassed = (currentTime - lastShowTime) / 1000
-        Log.d(TAG, "Time passed: $timePassed s, Required: $finalInterval s")
-
-        if (timePassed < finalInterval) {
-            Log.d(TAG, "Interval not reached.")
-            onDismiss()
-            return
+            Log.d(TAG, "startDelay is false, ignoring interval check.")
         }
 
         // 4. Poll for ad
-        val interstitialAd = InterstitialAdPreloader.pollAd(adUnitId)
+        val interstitialAd = InterstitialAdPreloader.pollAd(finalAdUnitId)
         if (interstitialAd != null) {
             Log.d(TAG, "Ad found in preloader. Showing...")
+            listener?.onAdLoaded(finalAdUnitId)
             
             interstitialAd.adEventCallback = object : InterstitialAdEventCallback {
                 override fun onAdDismissedFullScreenContent() {
                     Log.d(TAG, "Ad dismissed. Updating last show time.")
                     lastShowTime = System.currentTimeMillis()
-                    onDismiss()
+                    listener?.onAdDismissed(finalAdUnitId)
+                    if (reloadOnDismiss) startPreloading(finalAdUnitId)
+                    if (!isFragment) onDismiss()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(fullScreenContentError: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
-                    Log.e(TAG, "Ad failed to show: $fullScreenContentError")
+                override fun onAdFailedToShowFullScreenContent(error: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
+                    Log.e(TAG, "Ad failed to show: ${error.message}")
+                    listener?.onAdFailedToShow(finalAdUnitId, error.toString())
                     onDismiss()
                 }
 
                 override fun onAdShowedFullScreenContent() {
                     Log.d(TAG, "Ad showed.")
+                    listener?.onAdShowed(finalAdUnitId)
                 }
 
                 override fun onAdClicked() {
                     Log.d(TAG, "Ad clicked.")
+                    listener?.onAdClicked(finalAdUnitId)
                 }
                 
                 override fun onAdImpression() {
                     Log.d(TAG, "Ad impression.")
+                    listener?.onAdImpression(finalAdUnitId)
+                    if (isFragment) {
+                        Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
+                        onDismiss()
+                    }
                 }
             }
 
-            if (showDialog) {
+            if (startDelay) {
                 val dialog = AdLoadingDialog(activity)
                 dialog.show()
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     dialog.dismiss()
                     interstitialAd.show(activity)
-                }, delayMs)
+                }, 500)
             } else {
                 interstitialAd.show(activity)
             }
         } else {
             Log.w(TAG, "Ad not available in preloader yet.")
+            listener?.onAdFailedToLoad(finalAdUnitId, "Ad not available in preloader")
             onDismiss()
         }
     }

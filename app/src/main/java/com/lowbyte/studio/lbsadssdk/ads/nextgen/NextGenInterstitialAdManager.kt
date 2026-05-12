@@ -14,6 +14,7 @@ import com.lowbyte.studio.lbsadssdk.utils.AdLoadingDialog
 
 /**
  * Manager for Interstitial Ads using the GMA Next-Gen SDK.
+ * Standardized parameters and context-aware dismissal logic.
  */
 class NextGenInterstitialAdManager(
     private var adUnitId: String? = null,
@@ -24,79 +25,76 @@ class NextGenInterstitialAdManager(
     private var interstitialAd: InterstitialAd? = null
     private var isLoading = false
 
-    interface InterstitialListener {
-        fun onAdLoaded() {}
-        fun onAdFailedToLoad(error: String) {}
-        fun onAdDismissed() {}
-        fun onAdClicked() {}
-        fun onAdShowed() {}
-        fun onAdFailedToShow(error: String) {}
-    }
-
     /**
      * Loads an interstitial ad.
      */
-    fun loadAd(activity: Activity, listener: InterstitialListener? = null) {
+    fun loadAd(
+        activity: Activity,
+        customAdUnitId: String? = null,
+        customRemoteConfigKey: String? = null,
+        listener: NextGenAdListener? = null
+    ) {
+        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/1033173712"
+        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+
         if (billingManager?.isUserPro() == true) {
             Log.d(TAG, "Interstitial: User is Pro, ads suppressed.")
             return
         }
         
-        val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
-            Log.d(TAG, "Interstitial disabled by Remote Config (key: $remoteConfigKey)")
+            Log.d(TAG, "Interstitial disabled by Remote Config (key: $finalRemoteKey)")
             return
         }
 
         if (interstitialAd != null || isLoading) return
 
         isLoading = true
-        val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/1033173712" // Sample ID
         val adRequest = AdRequest.Builder(finalAdUnitId).build()
 
         InterstitialAd.load(adRequest, object : AdLoadCallback<InterstitialAd> {
             override fun onAdLoaded(ad: InterstitialAd) {
-                Log.d(TAG, "Interstitial ad loaded.")
+                Log.d(TAG, "Interstitial ad loaded: $finalAdUnitId")
                 interstitialAd = ad
                 isLoading = false
-                listener?.onAdLoaded()
+                listener?.onAdLoaded(finalAdUnitId)
 
                 ad.adEventCallback = object : InterstitialAdEventCallback {
                     override fun onAdDismissedFullScreenContent() {
                         Log.d(TAG, "Interstitial ad dismissed.")
                         interstitialAd = null
-                        listener?.onAdDismissed()
-                        // Preload next ad
-                        loadAd(activity)
+                        listener?.onAdDismissed(finalAdUnitId)
                     }
 
-                    override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) {
-                        Log.e(TAG, "Interstitial ad failed to show: $fullScreenContentError")
+                    override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+                        Log.e(TAG, "Interstitial ad failed to show: ${error.message}")
                         interstitialAd = null
-                        listener?.onAdFailedToShow(fullScreenContentError.toString())
+                        listener?.onAdFailedToShow(finalAdUnitId, error.toString())
                     }
 
                     override fun onAdShowedFullScreenContent() {
                         Log.d(TAG, "Interstitial ad showed.")
-                        listener?.onAdShowed()
+                        listener?.onAdShowed(finalAdUnitId)
                     }
 
                     override fun onAdClicked() {
                         Log.d(TAG, "Interstitial ad clicked.")
-                        listener?.onAdClicked()
+                        listener?.onAdClicked(finalAdUnitId)
                     }
 
                     override fun onAdImpression() {
                         Log.d(TAG, "Interstitial ad impression recorded.")
+                        listener?.onAdImpression(finalAdUnitId)
                     }
                 }
             }
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.e(TAG, "Interstitial ad failed to load: $adError")
+                Log.e(TAG, "Interstitial ad failed to load: ${adError.message}")
                 isLoading = false
                 interstitialAd = null
-                listener?.onAdFailedToLoad(adError.toString())
+                listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
             }
         })
     }
@@ -108,12 +106,53 @@ class NextGenInterstitialAdManager(
         activity: Activity,
         showDialog: Boolean = true,
         delayMs: Long = 500,
-        listener: InterstitialListener? = null
+        reloadOnDismiss: Boolean = true,
+        isFragment: Boolean = false,
+        listener: NextGenAdListener? = null,
+        onDismiss: () -> Unit
     ) {
-        if (interstitialAd == null) {
+        val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/1033173712"
+        val ad = interstitialAd
+
+        if (ad == null) {
             Log.d(TAG, "Ad not loaded. Loading now...")
-            loadAd(activity, listener)
+            loadAd(activity, listener = listener)
+            onDismiss()
             return
+        }
+
+        // Setup dismissal behavior
+        val originalCallback = ad.adEventCallback
+        ad.adEventCallback = object : InterstitialAdEventCallback {
+            override fun onAdDismissedFullScreenContent() {
+                originalCallback?.onAdDismissedFullScreenContent()
+                if (reloadOnDismiss) loadAd(activity, listener = listener)
+                if (!isFragment) {
+                    Log.d(TAG, "isFragment is false, dismissing via onAdDismissed.")
+                    onDismiss()
+                }
+            }
+
+            override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+                originalCallback?.onAdFailedToShowFullScreenContent(error)
+                onDismiss()
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                originalCallback?.onAdShowedFullScreenContent()
+            }
+
+            override fun onAdClicked() {
+                originalCallback?.onAdClicked()
+            }
+
+            override fun onAdImpression() {
+                originalCallback?.onAdImpression()
+                if (isFragment) {
+                    Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
+                    onDismiss()
+                }
+            }
         }
 
         if (showDialog) {
@@ -121,10 +160,10 @@ class NextGenInterstitialAdManager(
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                interstitialAd?.show(activity)
+                ad.show(activity)
             }, delayMs)
         } else {
-            interstitialAd?.show(activity)
+            ad.show(activity)
         }
     }
 }
