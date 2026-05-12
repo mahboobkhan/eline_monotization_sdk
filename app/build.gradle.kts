@@ -1,23 +1,16 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.crashlytics)
-    alias(libs.plugins.performance)
+    `maven-publish`
 }
 
 android {
-    namespace = "com.lowbyte.studio.lbsadssdk"
+    namespace = "com.eline.sdk.admob.ngm"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.cloud.storage.eline.cloud_storage"
         minSdk = 26
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,29 +29,36 @@ android {
             )
         }
     }
+    
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+
+    // Modern way to configure Kotlin compiler options in AGP
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
+
     buildFeatures {
         compose = true
         viewBinding = true
         buildConfig = true
-    }
-    bundle {
-        language {
-            enableSplit = false
-        }
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material) // Added for Theme.MaterialComponents support
+    implementation(libs.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -92,5 +92,18 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.ads.mobile.sdk)
+}
 
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "com.eline.sdk"
+            artifactId = "admob-ngm"
+            version = "1.0.0"
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }

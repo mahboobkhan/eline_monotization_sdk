@@ -1,153 +1,93 @@
-# LBS Ads SDK 🚀
+# Eline AdMob Next-Gen SDK
 
-A comprehensive, modular, and premium Android Ad SDK wrapper for AdMob, Firebase, In-App Billing, and Play Store utilities. Designed for high-performance and leak-free implementation.
+A powerful, production-ready Android Ad SDK built on top of the Google Mobile Ads (GMA) Next-Gen framework. This SDK simplifies ad management with built-in GDPR consent, threshold counters, interval timers, and automatic reloading.
 
----
+## 🚀 Features
+- **Next-Gen Ready**: Built for GMA SDK v1.0.1+.
+- **GDPR Compliance**: Built-in UMP Consent Management with EEA detection.
+- **Smart Interstitials**: Counter-based and Interval-based display logic.
+- **Auto-Reload**: Automatically preloads the next ad after dismissal.
+- **Universal Listener**: Standardized callbacks across all ad formats.
+- **Pro User Support**: Easy suppression of ads for premium users.
 
-## 🛠 Features implemented
+## 📦 Installation
 
-- [x] **AdMob Suite**:
-    - [x] Banner Ads (with Shimmer support)
-    - [x] Interstitial Ads (with Loading Dialog)
-    - [x] Rewarded Ads (with Loading Dialog)
-    - [x] App Open Ads (Lifecycle aware)
-    - [x] Native Ads (Customizable Layouts + Shimmer)
-- [x] **Analytics & Events**:
-    - [x] Firebase Analytics integration
-    - [x] Mixpanel Events support
-    - [x] Unified `AnalyticsManager` for simultaneous logging
-- [x] **In-App Billing (Google Play)**:
-    - [x] Subscription Support
-    - [x] One-time Product Purchases
-    - [x] Restore Purchases
-    - [x] Consume Product functionality
-- [x] **Remote Management**:
-    - [x] Firebase Remote Config for dynamic ad toggling & IDs
-- [x] **Play Store Utilities**:
-    - [x] In-App Review Manager
-    - [x] In-App Update (Flexible & Force)
-- [x] **Firebase Cloud Messaging (FCM)**:
-    - [x] Custom Messaging Service
-    - [x] Custom Notification Design (Day/Night compatible)
-    - [x] Permission Handling (Android 13+)
-    - [x] Feature Image & Icon Support
-    - [x] Topic Subscribe/Unsubscribe
-- [x] **Performance & Stability**:
-    - [x] Firebase Crashlytics & Performance monitoring
-    - [x] Memory Leak Protection (WeakReferences & Application Context)
-    - [x] Internet connectivity checks for ad requests
-
----
-
-## 🚀 Basic Implementation
-
-### 1. Initialization
-Initialize the SDK in your `Application` class:
-
+### 1. Add JitPack to your project
+In your `settings.gradle.kts`:
 ```kotlin
-class MyApp : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        
-        // Initialize Core SDK
-        LBSAdsSDK.init(this, "YOUR_MIXPANEL_TOKEN")
-        
-        // Initialize Ads with Remote Config
-        AdsManager.init(this) { success ->
-            if (success) {
-                // Preload ads if needed
-                AdsManager.loadInterstitialAd(this)
-            }
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+### 2. Add the dependency
+In your app `build.gradle.kts`:
+```kotlin
+dependencies {
+    implementation("com.github.YOUR_GITHUB_USERNAME:LBSAdsSDK:1.0.0")
+}
+```
+
+## 🛠️ Setup
+
+### 1. Update AndroidManifest.xml
+Add your AdMob App ID:
+```xml
+<meta-data
+    android:name="com.google.android.gms.ads.APPLICATION_ID"
+    android:value="ca-app-pub-3940256099942544~3347511713"/>
+```
+
+### 2. Initialize the SDK
+Initialize in your `SplashActivity`:
+```kotlin
+NextGenAdsManager.initialize(
+    context = this,
+    appId = "YOUR_APP_ID",
+    billing = billingManager
+) {
+    // SDK Initialized
+    NextGenConsentManager.gatherConsent(this, debug = BuildConfig.DEBUG) { resolved ->
+        if (resolved) {
+            // Start preloading and loading ads
         }
     }
 }
 ```
 
-### 2. Loading & Showing Ads
+## 📺 Usage Examples
 
-#### Interstitial Ads
+### Interstitial (Counter-based)
 ```kotlin
-// Load
-AdsManager.loadInterstitialAd(activity)
+val manager = NextGenAdsManager.getInterstitialCounterManager(adUnitId = "AD_UNIT_ID")
+manager.startPreloading()
 
-// Show
-AdsManager.showInterstitialAd(activity) {
-    // Callback when ad dismissed or fails
+// Show when ready (checks counter threshold automatically)
+manager.showAd(this) {
+    // On dismissed or skipped
 }
 ```
 
-#### Native Ads
+### Banner Ad
 ```kotlin
-AdsManager.loadNativeAd(
-    activity, 
-    binding.nativeAdContainer, 
-    R.layout.layout_native_ad // Your custom layout
+NextGenAdsManager.getBannerManager().loadAndShowBanner(
+    activity = this,
+    container = binding.bannerContainer
 )
 ```
 
-### 3. In-App Purchases
+### Native Ad
 ```kotlin
-// Check Pro Status
-val isPro = AdsManager.getBillingManager().isUserPro()
-
-// Purchase
-AdsManager.getBillingManager().purchaseProduct(
-    activity, 
-    "your_product_id", 
-    BillingClient.ProductType.SUBS
-) { success ->
-    if (success) { /* Handle success */ }
-}
+NextGenAdsManager.getNativeAdManager().loadAndShowNativeAd(
+    activity = this,
+    container = binding.nativeContainer,
+    size = NextGenNativeAdManager.NativeSize.MEDIUM
+)
 ```
-
-### 4. Logging Events
-```kotlin
-AnalyticsManager.logEvent("button_clicked", Bundle().apply {
-    putString("button_name", "home_start")
-})
-```
-
-### 5. Notifications & FCM
-
-#### Request Permissions
-```kotlin
-FCMManager.requestNotificationPermission(activity, 101)
-```
-
-#### Subscribe to Topics
-```kotlin
-FCMManager.subscribeToTopic("new_deals") { success ->
-    // Handle result
-}
-```
-
-#### Custom Notification Payload
-The SDK handles incoming data payloads automatically. Send these keys via FCM:
-- `title`: Notification Title
-- `body`: Notification Body
-- `icon_url`: Small Icon URL
-- `feature_image_url`: Big Feature Image URL
-- `is_ad`: Set to "true" to show an AD badge
-- `link`: URL to open on click
-
----
-
-## 📂 Project Structure
-
-- `LBSAdsSDK.kt`: Main entry point and initialization logic.
-- `ads/`: Contains managers for all AdMob formats.
-- `billing/`: Google Play Billing implementation.
-- `remote/`: Firebase Remote Config management.
-- `analytics/`: Unified logging for Firebase and Mixpanel.
-- `updates/`: Play Store update and review logic.
-- `utils/`: UI components (Shimmer, Loading Dialog) and network helpers.
-
----
-
-## ⚠️ Memory Leak Protection
-The SDK uses `WeakReference` for Activity and Mixpanel tracking to ensure that long-lived singleton managers do not prevent the Garbage Collector from reclaiming memory. All managers use `applicationContext` internally for safe, leak-free operation.
-
----
 
 ## 📄 License
-Created by **LowByte Studio**. For internal use.
+MIT License - Copyright (c) 2026 Eline
