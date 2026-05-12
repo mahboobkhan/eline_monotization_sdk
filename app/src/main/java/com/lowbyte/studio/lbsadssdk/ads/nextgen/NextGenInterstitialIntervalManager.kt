@@ -92,8 +92,8 @@ class NextGenInterstitialIntervalManager(
                     onDismiss()
                 }
 
-                override fun onAdFailedToShowFullScreenContent(error: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
-                    Log.e(TAG, "Ad failed to show: $error")
+                override fun onAdFailedToShowFullScreenContent(fullScreenContentError: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
+                    Log.e(TAG, "Ad failed to show: $fullScreenContentError")
                     onDismiss()
                 }
 

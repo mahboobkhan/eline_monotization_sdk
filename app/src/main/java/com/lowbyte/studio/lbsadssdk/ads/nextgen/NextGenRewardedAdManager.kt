@@ -67,10 +67,10 @@ class NextGenRewardedAdManager(
                         loadAd(activity)
                     }
 
-                    override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
-                        Log.e(TAG, "Rewarded ad failed to show: $error")
+                    override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) {
+                        Log.e(TAG, "Rewarded ad failed to show: $fullScreenContentError")
                         rewardedAd = null
-                        listener?.onAdFailedToShow(error.toString())
+                        listener?.onAdFailedToShow(fullScreenContentError.toString())
                     }
 
                     override fun onAdShowedFullScreenContent() {
@@ -89,11 +89,11 @@ class NextGenRewardedAdManager(
                 }
             }
 
-            override fun onAdFailedToLoad(error: LoadAdError) {
-                Log.e(TAG, "Rewarded ad failed to load: $error")
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e(TAG, "Rewarded ad failed to load: $adError")
                 isLoading = false
                 rewardedAd = null
-                listener?.onAdFailedToLoad(error.toString())
+                listener?.onAdFailedToLoad(adError.toString())
             }
         })
     }

@@ -64,10 +64,10 @@ class NextGenInterstitialAdManager(
                         loadAd(activity)
                     }
 
-                    override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
-                        Log.e(TAG, "Interstitial ad failed to show: $error")
+                    override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) {
+                        Log.e(TAG, "Interstitial ad failed to show: $fullScreenContentError")
                         interstitialAd = null
-                        listener?.onAdFailedToShow(error.toString())
+                        listener?.onAdFailedToShow(fullScreenContentError.toString())
                     }
 
                     override fun onAdShowedFullScreenContent() {
@@ -86,11 +86,11 @@ class NextGenInterstitialAdManager(
                 }
             }
 
-            override fun onAdFailedToLoad(error: LoadAdError) {
-                Log.e(TAG, "Interstitial ad failed to load: $error")
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e(TAG, "Interstitial ad failed to load: $adError")
                 isLoading = false
                 interstitialAd = null
-                listener?.onAdFailedToLoad(error.toString())
+                listener?.onAdFailedToLoad(adError.toString())
             }
         })
     }
