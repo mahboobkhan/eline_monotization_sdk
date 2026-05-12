@@ -129,44 +129,22 @@ class NextGenNativeAdManager(
         val headlineView = adView.findViewById<TextView>(R.id.ad_headline)
         val bodyView = adView.findViewById<TextView>(R.id.ad_body)
         val ctaView = adView.findViewById<Button>(R.id.ad_call_to_action)
-        val iconView = adView.findViewById<ImageView>(R.id.ad_app_icon)
-        val priceView = adView.findViewById<TextView>(R.id.ad_price)
-        val starRatingView = adView.findViewById<RatingBar>(R.id.ad_stars)
-        val storeView = adView.findViewById<TextView>(R.id.ad_store)
-        val advertiserView = adView.findViewById<TextView>(R.id.ad_advertiser)
         val mediaView = adView.findViewById<com.google.android.libraries.ads.mobile.sdk.nativead.MediaView>(R.id.ad_media)
 
-        // Assign views to NativeAdView
+        // Assign core views to NativeAdView for tracking
         adView.headlineView = headlineView
         adView.bodyView = bodyView
         adView.callToActionView = ctaView
-        adView.iconView = iconView
-        adView.priceView = priceView
-        adView.starRatingView = starRatingView
-        adView.storeView = storeView
-        adView.advertiserView = advertiserView
 
         // Populate assets
         headlineView?.text = nativeAd.headline
         bodyView?.text = nativeAd.body
         ctaView?.text = nativeAd.callToAction
-        iconView?.setImageDrawable(nativeAd.icon?.drawable)
-        priceView?.text = nativeAd.price
-        nativeAd.starRating?.let { rating ->
-            starRatingView?.rating = rating.toFloat()
-        }
-        storeView?.text = nativeAd.store
-        advertiserView?.text = nativeAd.advertiser
 
         // Set visibility based on asset presence
         headlineView?.visibility = getAssetViewVisibility(nativeAd.headline)
         bodyView?.visibility = getAssetViewVisibility(nativeAd.body)
         ctaView?.visibility = getAssetViewVisibility(nativeAd.callToAction)
-        iconView?.visibility = getAssetViewVisibility(nativeAd.icon)
-        priceView?.visibility = getAssetViewVisibility(nativeAd.price)
-        starRatingView?.visibility = getAssetViewVisibility(nativeAd.starRating)
-        storeView?.visibility = getAssetViewVisibility(nativeAd.store)
-        advertiserView?.visibility = getAssetViewVisibility(nativeAd.advertiser)
 
         // Configure MediaView
         mediaView?.imageScaleType = ImageView.ScaleType.CENTER_CROP
