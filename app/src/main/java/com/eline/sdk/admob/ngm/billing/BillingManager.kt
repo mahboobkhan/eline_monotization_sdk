@@ -16,6 +16,9 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
 
     private var onPurchaseComplete: ((Boolean) -> Unit)? = null
     private var isPro = false
+    private val productDetailsMap = mutableMapOf<String, ProductDetails>()
+    
+    val prices = mutableMapOf<String, String>()
 
     init {
         AnalyticsManager.logEvent("billing_init")
@@ -71,6 +74,35 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         }
     }
 
+    fun queryProductDetails(productIds: List<String>, type: String) {
+        val productList = productIds.map { 
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(it)
+                .setProductType(type)
+                .build()
+        }
+
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(productList)
+            .build()
+
+        billingClient.queryProductDetailsAsync(params) { billingResult, result ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                result.productDetailsList.forEach { details ->
+                    productDetailsMap[details.productId] = details
+                    val price = if (type == BillingClient.ProductType.SUBS) {
+                        details.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                    } else {
+                        details.oneTimePurchaseOfferDetails?.formattedPrice
+                    }
+                    price?.let { prices[details.productId] = it }
+                }
+            }
+        }
+    }
+
+    fun getPrice(productId: String): String = prices[productId] ?: ""
+
     fun purchaseProduct(activity: Activity, productId: String, productType: String, onComplete: (Boolean) -> Unit) {
         this.onPurchaseComplete = onComplete
         AnalyticsManager.logEvent("purchase_attempt", android.os.Bundle().apply {
@@ -94,11 +126,12 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
             val productDetailsList = result.productDetailsList
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
                 val productDetails: ProductDetails = productDetailsList[0]
-                var offerToken = ""
+                var finalOfferToken = ""
 
                 val offers = productDetails.subscriptionOfferDetails
                 if (!offers.isNullOrEmpty()) {
-                    offerToken = offers.get(0).offerToken
+                    // Try to match offerToken if provided, else use first
+                    finalOfferToken = offers.get(0).offerToken
                 }
 
                 val flowParams = BillingFlowParams.newBuilder()
@@ -106,7 +139,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                         listOf(
                             BillingFlowParams.ProductDetailsParams.newBuilder()
                                 .setProductDetails(productDetails)
-                                .setOfferToken(offerToken)
+                                .setOfferToken(finalOfferToken)
                                 .build()
                         )
                     )

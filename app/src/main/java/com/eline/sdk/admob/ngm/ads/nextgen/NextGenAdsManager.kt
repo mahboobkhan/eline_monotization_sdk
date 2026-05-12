@@ -60,6 +60,8 @@ object NextGenAdsManager {
         }
     }
 
+    fun getBillingManager(): BillingManager? = if (::billingManager.isInitialized) billingManager else null
+
     /**
      * Creates a new Banner manager with optional configuration.
      */
