@@ -4,7 +4,10 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
-import com.google.android.libraries.ads.mobile.sdk.common.InitializationConfig
+import com.google.android.libraries.ads.mobile.sdk.common.AdRequest
+import com.google.android.libraries.ads.mobile.sdk.common.PreloadConfiguration
+import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig
+import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdPreloader
 import com.lowbyte.studio.lbsadssdk.billing.BillingManager
 import com.lowbyte.studio.lbsadssdk.remote.RemoteConfigManager
 import kotlinx.coroutines.CoroutineScope
@@ -119,9 +122,9 @@ object NextGenAdsManager {
      * Starts preloading Interstitial ads globally.
      */
     fun startPreloadingInterstitial(adUnitId: String) {
-        val adRequest = com.google.android.libraries.ads.mobile.sdk.common.AdRequest.Builder(adUnitId).build()
-        val preloadConfig = com.google.android.libraries.ads.mobile.sdk.interstitial.PreloadConfiguration(adRequest)
-        com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdPreloader.start(adUnitId, preloadConfig)
+        val adRequest = AdRequest.Builder(adUnitId).build()
+        val preloadConfig = PreloadConfiguration(adRequest)
+        InterstitialAdPreloader.start(adUnitId, preloadConfig)
         Log.d(TAG, "Global preloading started for: $adUnitId")
     }
 
