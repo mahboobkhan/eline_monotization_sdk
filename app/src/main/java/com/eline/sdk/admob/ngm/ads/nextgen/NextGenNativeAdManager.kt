@@ -186,6 +186,46 @@ class NextGenNativeAdManager(
         NativeAdLoader.load(adRequest, adCallback)
     }
 
+    /**
+     * Loads a native ad into the manager without showing it.
+     */
+    fun loadAd(
+        activity: Activity,
+        customAdUnitId: String? = null,
+        listener: NextGenAdListener? = null
+    ) {
+        if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Native: User is Pro, ads suppressed.")
+            return
+        }
+
+        if (!NextGenConsentManager.canRequestAds(activity)) {
+            Log.w(TAG, "Native: First Resolve Consent then Try to load Ads.")
+            return
+        }
+
+        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
+        val adRequest = NativeAdRequest
+            .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
+            .build()
+
+        val adCallback = object : NativeAdLoaderCallback {
+            override fun onNativeAdLoaded(nativeAd: NativeAd) {
+                Log.d(TAG, "Native ad loaded: $finalAdUnitId")
+                currentNativeAd?.destroy()
+                currentNativeAd = nativeAd
+                listener?.onAdLoaded(finalAdUnitId)
+            }
+
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.e(TAG, "Native ad failed to load: ${adError.message}")
+                listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
+            }
+        }
+
+        NativeAdLoader.load(adRequest, adCallback)
+    }
+
     fun destroy() {
         currentNativeAd?.destroy()
         currentNativeAd = null

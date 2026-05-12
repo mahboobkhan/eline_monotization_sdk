@@ -64,17 +64,20 @@ class NextGenInterstitialAdManager(
                     override fun onAdDismissedFullScreenContent() {
                         Log.d(TAG, "Interstitial ad dismissed.")
                         interstitialAd = null
+                        AdStateController.isInterstitialShowing = false
                         listener?.onAdDismissed(finalAdUnitId)
                     }
 
                     override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
                         Log.e(TAG, "Interstitial ad failed to show: ${error.message}")
                         interstitialAd = null
+                        AdStateController.isInterstitialShowing = false
                         listener?.onAdFailedToShow(finalAdUnitId, error.toString())
                     }
 
                     override fun onAdShowedFullScreenContent() {
                         Log.d(TAG, "Interstitial ad showed.")
+                        AdStateController.isInterstitialShowing = true
                         listener?.onAdShowed(finalAdUnitId)
                     }
 
@@ -127,6 +130,7 @@ class NextGenInterstitialAdManager(
         ad.adEventCallback = object : InterstitialAdEventCallback {
             override fun onAdDismissedFullScreenContent() {
                 originalCallback?.onAdDismissedFullScreenContent()
+                AdStateController.isInterstitialShowing = false
                 if (reloadOnDismiss) loadAd(activity, listener = listener)
                 if (!isFragment) {
                     Log.d(TAG, "isFragment is false, dismissing via onAdDismissed.")
@@ -136,6 +140,7 @@ class NextGenInterstitialAdManager(
 
             override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
                 originalCallback?.onAdFailedToShowFullScreenContent(error)
+                AdStateController.isInterstitialShowing = false
                 onDismiss()
             }
 
