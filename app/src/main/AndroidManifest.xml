@@ -9,11 +9,7 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LBSAdsSDK"
         android:hardwareAccelerated="true">
 
         <service
@@ -26,33 +22,21 @@
 
         <activity
             android:name=".examples.SplashActivity"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/app_name"
-            android:theme="@style/Theme.LBSAdsSDK"
             android:hardwareAccelerated="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity
             android:name=".examples.HomeActivity"
             android:exported="false"
-            android:label="Home"
-            android:theme="@style/Theme.LBSAdsSDK" />
+            android:label="Home" />
 
         <activity
             android:name=".examples.SettingsActivity"
             android:exported="false"
-            android:label="Settings"
-            android:theme="@style/Theme.LBSAdsSDK" />
+            android:label="Settings" />
 
-        <!-- AdMob App ID (Mandatory for GMA SDK) -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
 
 </manifest>
