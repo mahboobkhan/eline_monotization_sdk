@@ -36,6 +36,7 @@ class NextGenAppOpenAdManager(
     private var isShowingAd = false
     private var loadTime: Long = 0
     private var currentActivityRef: WeakReference<Activity>? = null
+    var isEnabled: Boolean = true
 
     init {
         application.registerActivityLifecycleCallbacks(this)
@@ -65,8 +66,13 @@ class NextGenAppOpenAdManager(
             return
         }
         
-        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
+            Log.d(TAG, "App Open disabled manually (isEnabled=false)")
+            return
+        }
+
+        val isRemoteEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        if (!isRemoteEnabled) {
             Log.d(TAG, "App Open disabled by Remote Config (key: $finalRemoteKey)")
             return
         }
@@ -113,6 +119,12 @@ class NextGenAppOpenAdManager(
         onComplete: (() -> Unit)? = null
     ) {
         if (isShowingAd) return
+
+        if (!isEnabled) {
+            Log.d(TAG, "App Open show suppressed: isEnabled is false")
+            onComplete?.invoke()
+            return
+        }
 
         if (billingManager?.isUserPro() == true) {
             onComplete?.invoke()

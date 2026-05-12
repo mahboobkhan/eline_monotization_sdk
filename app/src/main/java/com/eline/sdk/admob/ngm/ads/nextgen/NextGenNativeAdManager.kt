@@ -187,43 +187,67 @@ class NextGenNativeAdManager(
     }
 
     /**
-     * Loads a native ad into the manager without showing it.
+     * Shows a preloaded ad or loads and shows a new one.
      */
-    fun loadAd(
+    fun showAd(
         activity: Activity,
-        customAdUnitId: String? = null,
-        listener: NextGenAdListener? = null
+        container: ViewGroup,
+        layoutResId: Int? = null,
+        onAdLoaded: (() -> Unit)? = null,
+        onAdFailed: (() -> Unit)? = null
     ) {
         if (billingManager?.isUserPro() == true) {
-            Log.d(TAG, "Native: User is Pro, ads suppressed.")
+            container.visibility = View.GONE
             return
         }
 
         if (!NextGenConsentManager.canRequestAds(activity)) {
-            Log.w(TAG, "Native: First Resolve Consent then Try to load Ads.")
+            container.visibility = View.GONE
             return
         }
 
-        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
-        val adRequest = NativeAdRequest
-            .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
-            .build()
+        val ad = currentNativeAd
+        if (ad != null) {
+            displayAdInContainer(activity, container, ad, layoutResId)
+            onAdLoaded?.invoke()
+        } else {
+            loadAndShowNativeAd(
+                activity = activity,
+                container = container,
+                customLayout = layoutResId,
+                listener = object : NextGenAdListener {
+                    override fun onAdLoaded(adUnitId: String) {
+                        onAdLoaded?.invoke()
+                    }
 
-        val adCallback = object : NativeAdLoaderCallback {
-            override fun onNativeAdLoaded(nativeAd: NativeAd) {
-                Log.d(TAG, "Native ad loaded: $finalAdUnitId")
-                currentNativeAd?.destroy()
-                currentNativeAd = nativeAd
-                listener?.onAdLoaded(finalAdUnitId)
-            }
+                    override fun onAdFailedToLoad(adUnitId: String, error: String) {
+                        onAdFailed?.invoke()
+                    }
+                }
+            )
+        }
+    }
 
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.e(TAG, "Native ad failed to load: ${adError.message}")
-                listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
+    private fun displayAdInContainer(
+        activity: Activity,
+        container: ViewGroup,
+        nativeAd: NativeAd,
+        layoutResId: Int?
+    ) {
+        activity.runOnUiThread {
+            try {
+                val layout = layoutResId ?: R.layout.layout_native_medium
+                val adView = LayoutInflater.from(activity).inflate(layout, null) as NativeAdView
+                displayNativeAd(nativeAd, adView)
+                
+                container.removeAllViews()
+                container.addView(adView)
+                container.visibility = View.VISIBLE
+            } catch (e: Exception) {
+                Log.e(TAG, "Error displaying native ad: ${e.message}")
+                container.visibility = View.GONE
             }
         }
-
-        NativeAdLoader.load(adRequest, adCallback)
     }
 
     fun destroy() {
