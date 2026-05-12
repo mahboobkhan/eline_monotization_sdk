@@ -98,9 +98,9 @@ dependencies {
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "com.eline.sdk"
+            groupId = "com.github.mahboobkhan"
             artifactId = "eline_monotization_sdk"
-            version = "1.0.0"
+            version = "1.0.1"
 
             afterEvaluate {
                 from(components["release"])
