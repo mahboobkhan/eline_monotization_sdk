@@ -1,4 +1,4 @@
-package com.lowbyte.studio.lbsadssdk
+package com.eline.sdk.admob.ngm
 
 import org.junit.Test
 

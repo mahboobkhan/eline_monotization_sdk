@@ -13,9 +13,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
-rootProject.name = "LBS Ads SDK"
+rootProject.name = "eline_monotization_sdk"
 include(":app")
  

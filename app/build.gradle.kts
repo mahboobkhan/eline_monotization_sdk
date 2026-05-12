@@ -92,13 +92,14 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.ads.mobile.sdk)
+    implementation(libs.eline.sdk)
 }
 
 publishing {
     publications {
         register<MavenPublication>("release") {
             groupId = "com.eline.sdk"
-            artifactId = "admob-ngm"
+            artifactId = "eline_monotization_sdk"
             version = "1.0.0"
 
             afterEvaluate {

@@ -11,6 +11,7 @@ import com.eline.sdk.admob.ngm.ads.nextgen.NextGenAdsManager
 import com.eline.sdk.admob.ngm.ads.nextgen.NextGenConsentManager
 import com.eline.sdk.admob.ngm.billing.BillingManager
 import android.util.Log
+import com.eline.sdk.admob.ngm.BuildConfig
 
 /**
  * Example Splash Activity demonstrating SDK initialization and App Open Ad.
@@ -32,7 +33,7 @@ class SplashActivity : AppCompatActivity() {
             // SDK Initialized
             
             // 2. Gather GDPR Consent before any ad request
-            NextGenConsentManager.gatherConsent(this, debug = com.eline.sdk.admob.ngm.BuildConfig.DEBUG) { resolved ->
+            NextGenConsentManager.gatherConsent(this, debug = BuildConfig.DEBUG) { resolved ->
                 if (resolved) {
                     // Consent resolved (or not required) - Proceed with ads
                     
