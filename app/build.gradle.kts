@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.crashlytics)
@@ -8,23 +9,23 @@ plugins {
 
 android {
     namespace = "com.lowbyte.studio.lbsadssdk"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.cloud.storage.eline.cloud_storage"
         minSdk = 26
-      //  targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-//    java {
-//        toolchain {
-//            languageVersion.set(JavaLanguageVersion.of(17))
-//        }
-//    }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
 
     buildTypes {
         release {
@@ -36,30 +37,21 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
     buildFeatures {
+        compose = true
         viewBinding = true
         buildConfig = true
-        compose = true
-
     }
     bundle {
         language {
             enableSplit = false
         }
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
-//    kotlinOptions {
-//        jvmTarget = "17"
-//    }
-    buildFeatures {
-        compose = true
-        viewBinding = true
-        buildConfig = true
     }
 }
 
