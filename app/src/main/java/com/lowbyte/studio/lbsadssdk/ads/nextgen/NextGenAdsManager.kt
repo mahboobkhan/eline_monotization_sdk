@@ -140,6 +140,36 @@ object NextGenAdsManager {
     }
 
     /**
+     * Creates a new Native manager with optional configuration.
+     */
+    fun getNativeAdManager(
+        adUnitId: String? = null,
+        remoteConfigKey: String? = "native_enabled"
+    ): NextGenNativeAdManager {
+        return NextGenNativeAdManager(
+            adUnitId = adUnitId,
+            billingManager = if (::billingManager.isInitialized) billingManager else null,
+            remoteConfigKey = remoteConfigKey
+        )
+    }
+
+    /**
+     * Creates a new App Open manager with optional configuration.
+     */
+    fun getAppOpenAdManager(
+        application: Application,
+        adUnitId: String,
+        remoteConfigKey: String? = "app_open_enabled"
+    ): NextGenAppOpenAdManager {
+        return NextGenAppOpenAdManager(
+            application = application,
+            adUnitId = adUnitId,
+            billingManager = if (::billingManager.isInitialized) billingManager else null,
+            remoteConfigKey = remoteConfigKey
+        )
+    }
+
+    /**
      * Checks if ads are enabled globally.
      */
     fun isAdsEnabled(): Boolean {
