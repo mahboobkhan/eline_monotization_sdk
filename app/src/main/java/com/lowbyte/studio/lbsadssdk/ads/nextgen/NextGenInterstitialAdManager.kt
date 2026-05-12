@@ -37,10 +37,16 @@ class NextGenInterstitialAdManager(
      * Loads an interstitial ad.
      */
     fun loadAd(activity: Activity, listener: InterstitialListener? = null) {
-        if (billingManager?.isUserPro() == true) return
+        if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Interstitial: User is Pro, ads suppressed.")
+            return
+        }
         
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
-        if (!isEnabled) return
+        if (!isEnabled) {
+            Log.d(TAG, "Interstitial disabled by Remote Config (key: $remoteConfigKey)")
+            return
+        }
 
         if (interstitialAd != null || isLoading) return
 

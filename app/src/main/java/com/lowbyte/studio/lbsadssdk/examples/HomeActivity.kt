@@ -24,6 +24,7 @@ class HomeActivity : AppCompatActivity() {
 
         // 1. Show Banner Ad (Adaptive & Collapsible)
         val bannerManager = NextGenAdsManager.getBannerManager("ca-app-pub-3940256099942544/9214589741")
+        Log.d(TAG, "Loading banner ad...")
         bannerManager.loadAndShowBanner(
             activity = this as Activity,
             container = bannerContainer,
@@ -33,6 +34,7 @@ class HomeActivity : AppCompatActivity() {
 
         // 2. Show Medium Native Ad with Shimmer
         val nativeManager = NextGenAdsManager.getNativeAdManager("ca-app-pub-3940256099942544/2247696110")
+        Log.d(TAG, "Loading native ad...")
         nativeManager.loadAndShowNativeAd(
             activity = this as Activity,
             container = nativeContainer,
@@ -42,8 +44,9 @@ class HomeActivity : AppCompatActivity() {
         // 3. Setup Interstitial Counter Manager for a button click
         val counterManager = NextGenAdsManager.getInterstitialCounterManager("ca-app-pub-3940256099942544/1033173712")
         btnShowInterstitial.setOnClickListener {
+            Log.d(TAG, "Show Interstitial button clicked.")
             counterManager.showAd(this as Activity, threshold = 3) {
-                // Logic after ad dismissed or if threshold not reached
+                Log.d(TAG, "Interstitial dismissed or threshold not reached.")
             }
         }
     }

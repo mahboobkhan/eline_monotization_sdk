@@ -47,10 +47,16 @@ class NextGenAppOpenAdManager(
      * Loads an App Open ad.
      */
     fun loadAd() {
-        if (billingManager?.isUserPro() == true) return
+        if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "App Open: User is Pro, ads suppressed.")
+            return
+        }
         
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
-        if (!isEnabled) return
+        if (!isEnabled) {
+            Log.d(TAG, "App Open disabled by Remote Config (key: $remoteConfigKey)")
+            return
+        }
 
         if (isLoadingAd || isAdAvailable()) return
 

@@ -56,9 +56,12 @@ class NextGenBannerAdManager(
 
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
+            Log.d(TAG, "Banner ad disabled by Remote Config (key: $remoteConfigKey)")
             container.visibility = android.view.View.GONE
             return
         }
+
+        Log.d(TAG, "Loading and showing Banner ad: $finalAdUnitId")
 
         val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/9214589741"
         val adSize = if (maxHeight != null) {
@@ -91,16 +94,30 @@ class NextGenBannerAdManager(
                             listener?.onAdRefreshed()
                         }
                         override fun onAdFailedToRefresh(adError: LoadAdError) {
+                            Log.e(TAG, "Banner ad failed to refresh: ${adError.message}")
                             listener?.onAdFailedToRefresh(adError.toString())
                         }
                     }
 
                     ad.adEventCallback = object : BannerAdEventCallback {
-                        override fun onAdImpression() { listener?.onAdImpression() }
-                        override fun onAdClicked() { listener?.onAdClicked() }
-                        override fun onAdShowedFullScreenContent() { listener?.onAdShowed() }
-                        override fun onAdDismissedFullScreenContent() { listener?.onAdDismissed() }
+                        override fun onAdImpression() { 
+                            Log.d(TAG, "Banner ad impression.")
+                            listener?.onAdImpression() 
+                        }
+                        override fun onAdClicked() { 
+                            Log.d(TAG, "Banner ad clicked.")
+                            listener?.onAdClicked() 
+                        }
+                        override fun onAdShowedFullScreenContent() { 
+                            Log.d(TAG, "Banner ad showed full screen.")
+                            listener?.onAdShowed() 
+                        }
+                        override fun onAdDismissedFullScreenContent() { 
+                            Log.d(TAG, "Banner ad dismissed full screen.")
+                            listener?.onAdDismissed() 
+                        }
                         override fun onAdFailedToShowFullScreenContent(fullScreenContentError: FullScreenContentError) {
+                            Log.e(TAG, "Banner ad failed to show: ${fullScreenContentError.message}")
                             listener?.onAdFailedToShow(fullScreenContentError.toString())
                         }
                     }
@@ -110,6 +127,7 @@ class NextGenBannerAdManager(
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.e(TAG, "Banner ad failed to load: ${adError.message} (Code: ${adError.code})")
                     bannerAd = null
                     listener?.onAdFailedToLoad(adError.toString())
                     container.visibility = android.view.View.GONE

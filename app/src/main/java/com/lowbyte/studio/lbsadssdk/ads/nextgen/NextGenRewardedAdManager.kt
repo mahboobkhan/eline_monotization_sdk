@@ -39,11 +39,16 @@ class NextGenRewardedAdManager(
      * Loads a rewarded ad.
      */
     fun loadAd(activity: Activity, listener: RewardedListener? = null) {
-        // Option 1: Disable rewarded ads for Pro (Uncomment if needed)
-        // if (billingManager?.isUserPro() == true) return
+        if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Rewarded: User is Pro, ads suppressed.")
+            return
+        }
 
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
-        if (!isEnabled) return
+        if (!isEnabled) {
+            Log.d(TAG, "Rewarded disabled by Remote Config (key: $remoteConfigKey)")
+            return
+        }
 
         if (rewardedAd != null || isLoading) return
 

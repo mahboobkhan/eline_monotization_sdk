@@ -51,6 +51,7 @@ class NextGenInterstitialCounterManager(
     ) {
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Interstitial Counter: User is Pro, ads suppressed.")
             onDismiss()
             return
         }
@@ -58,6 +59,7 @@ class NextGenInterstitialCounterManager(
         // 2. Remote check
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
+            Log.d(TAG, "Interstitial Counter disabled by Remote Config (key: $remoteConfigKey)")
             onDismiss()
             return
         }

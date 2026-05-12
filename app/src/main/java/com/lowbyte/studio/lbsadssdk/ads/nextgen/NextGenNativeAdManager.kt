@@ -48,6 +48,7 @@ class NextGenNativeAdManager(
     ) {
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
+            Log.d(TAG, "Native: User is Pro, ads suppressed.")
             container.visibility = View.GONE
             return
         }
@@ -55,6 +56,7 @@ class NextGenNativeAdManager(
         // 2. Remote check
         val isEnabled = remoteConfigKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
+            Log.d(TAG, "Native ad disabled by Remote Config (key: $remoteConfigKey)")
             container.visibility = View.GONE
             return
         }
