@@ -54,6 +54,12 @@ class NextGenBannerAdManager(
             return
         }
 
+        if (!NextGenConsentManager.canRequestAds(activity)) {
+            Log.w(TAG, "Banner: First Resolve Consent then Try to load Ads.")
+            container.visibility = android.view.View.GONE
+            return
+        }
+
         val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
             Log.d(TAG, "Banner ad disabled by Remote Config (key: $finalRemoteKey)")

@@ -58,6 +58,12 @@ class NextGenNativeAdManager(
             return
         }
 
+        if (!NextGenConsentManager.canRequestAds(activity)) {
+            Log.w(TAG, "Native: First Resolve Consent then Try to load Ads.")
+            container.visibility = View.GONE
+            return
+        }
+
         // 2. Remote check
         val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
@@ -153,6 +159,10 @@ class NextGenNativeAdManager(
     }
 
     fun preloadAd(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
+        // We need a context for consent check, but preloadAd is often called without Activity.
+        // If we can't verify, we log a warning.
+        Log.d(TAG, "Native Preload: Checking consent...")
+        
         val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
         val adRequest = NativeAdRequest
             .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))

@@ -8,7 +8,9 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import com.lowbyte.studio.lbsadssdk.R
 import com.lowbyte.studio.lbsadssdk.ads.nextgen.NextGenAdsManager
+import com.lowbyte.studio.lbsadssdk.ads.nextgen.NextGenConsentManager
 import com.lowbyte.studio.lbsadssdk.billing.BillingManager
+import android.util.Log
 
 /**
  * Example Splash Activity demonstrating SDK initialization and App Open Ad.
@@ -29,24 +31,39 @@ class SplashActivity : AppCompatActivity() {
         ) {
             // SDK Initialized
             
-            // 2. Start preloading Interstitial ads globally
-            NextGenAdsManager.startPreloadingInterstitial("ca-app-pub-3940256099942544/1033173712")
-            
-            // 3. Initialize and load App Open Ad
-            val appOpenManager = NextGenAdsManager.getAppOpenAdManager(
-                application = application ?: (applicationContext as android.app.Application),
-                adUnitId = "ca-app-pub-3940256099942544/9257395921"
-            )
-            appOpenManager.loadAd()
-            
-            // 4. Move to Home after a short delay
-            Handler(Looper.getMainLooper()).postDelayed({
-                appOpenManager.showAdIfAvailable(this as Activity) {
-                    val intent = Intent(this as android.content.Context, HomeActivity::class.java)
-                    startActivity(intent)
-                    finish()
+            // 2. Gather GDPR Consent before any ad request
+            NextGenConsentManager.gatherConsent(this) { resolved ->
+                if (resolved) {
+                    // Consent resolved (or not required) - Proceed with ads
+                    
+                    // 3. Start preloading Interstitial ads globally
+                    NextGenAdsManager.startPreloadingInterstitial("ca-app-pub-3940256099942544/1033173712")
+                    
+                    // 4. Initialize and load App Open Ad
+                    val appOpenManager = NextGenAdsManager.getAppOpenAdManager(
+                        application = application ?: (applicationContext as android.app.Application),
+                        adUnitId = "ca-app-pub-3940256099942544/9257395921"
+                    )
+                    appOpenManager.loadAd()
+                    
+                    // 5. Move to Home after a short delay
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        appOpenManager.showAdIfAvailable(this as Activity) {
+                            val intent = Intent(this as android.content.Context, HomeActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        }
+                    }, 3000)
+                } else {
+                    Log.e("SplashActivity", "Consent not resolved. Ads will not be loaded.")
+                    // Still move to Home so the user isn't stuck
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        val intent = Intent(this as android.content.Context, HomeActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }, 2000)
                 }
-            }, 3000)
+            }
         }
     }
 }

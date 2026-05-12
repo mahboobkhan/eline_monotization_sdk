@@ -27,6 +27,10 @@ class NextGenInterstitialCounterManager(
      * Starts preloading ads for this ad unit with success/failure logging.
      */
     fun startPreloading(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
+        if (!NextGenConsentManager.canRequestAds()) {
+            Log.w(TAG, "Preload: First Resolve Consent then Try to load Ads.")
+            return
+        }
         val finalAdUnitId = customAdUnitId ?: adUnitId
         val adRequest = AdRequest.Builder(finalAdUnitId).build()
         val preloadConfig = PreloadConfiguration(adRequest)

@@ -60,6 +60,11 @@ class NextGenAppOpenAdManager(
             return
         }
         
+        if (!NextGenConsentManager.canRequestAds(application)) {
+            Log.w(TAG, "App Open: First Resolve Consent then Try to load Ads.")
+            return
+        }
+        
         val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
             Log.d(TAG, "App Open disabled by Remote Config (key: $finalRemoteKey)")
