@@ -1,5 +1,6 @@
 package com.lowbyte.studio.lbsadssdk.examples
 
+import android.app.Activity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.FrameLayout
@@ -24,7 +25,7 @@ class HomeActivity : AppCompatActivity() {
         // 1. Show Banner Ad (Adaptive & Collapsible)
         val bannerManager = NextGenAdsManager.getBannerManager("ca-app-pub-3940256099942544/9214589741")
         bannerManager.loadAndShowBanner(
-            activity = this,
+            activity = this as Activity,
             container = bannerContainer,
             isCollapsible = true,
             collapsibleType = "bottom"
@@ -33,7 +34,7 @@ class HomeActivity : AppCompatActivity() {
         // 2. Show Medium Native Ad with Shimmer
         val nativeManager = NextGenAdsManager.getNativeAdManager("ca-app-pub-3940256099942544/2247696110")
         nativeManager.loadAndShowNativeAd(
-            activity = this,
+            activity = this as Activity,
             container = nativeContainer,
             size = NextGenNativeAdManager.NativeSize.MEDIUM
         )
@@ -41,7 +42,7 @@ class HomeActivity : AppCompatActivity() {
         // 3. Setup Interstitial Counter Manager for a button click
         val counterManager = NextGenAdsManager.getInterstitialCounterManager("ca-app-pub-3940256099942544/1033173712")
         btnShowInterstitial.setOnClickListener {
-            counterManager.showAd(this, threshold = 3) {
+            counterManager.showAd(this as Activity, threshold = 3) {
                 // Logic after ad dismissed or if threshold not reached
             }
         }

@@ -37,15 +37,20 @@ class InterstitialAdManager(private val adUnitId: String) {
         })
     }
 
-    fun showAd(activity: Activity, onDismiss: () -> Unit) {
+    fun showAd(
+        activity: Activity,
+        showDialog: Boolean = true,
+        delayMs: Long = 500,
+        onDismiss: () -> Unit
+    ) {
         if (interstitialAd != null) {
             AnalyticsManager.logEvent("interstitial_show_start", null)
-            val dialog = AdLoadingDialog(activity)
-            dialog.show()
+            val dialog = if (showDialog) AdLoadingDialog(activity) else null
+            dialog?.show()
 
-            // Artificial delay to show dialog as requested "Handle loading Ads Dialoges"
+            // Artificial delay to show dialog as requested
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                dialog.dismiss()
+                dialog?.dismiss()
                 interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         AnalyticsManager.logEvent("interstitial_dismissed", null)
@@ -67,7 +72,7 @@ class InterstitialAdManager(private val adUnitId: String) {
                     }
                 }
                 interstitialAd?.show(activity)
-            }, 800)
+            }, delayMs)
         } else {
             AnalyticsManager.logEvent("interstitial_not_loaded", null)
             loadAd(activity)

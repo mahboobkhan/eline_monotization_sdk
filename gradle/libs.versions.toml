@@ -1,5 +1,6 @@
 [versions]
 adsMobileSdk = "1.0.1"
+appcompat = "1.7.1"
 agp = "9.1.1"
 coreKtx = "1.18.0"
 junit = "4.13.2"
@@ -21,11 +22,13 @@ crashlyticsPlugin = "3.0.7"
 performancePlugin = "2.0.2"
 lifecycleProcess = "2.8.7"
 cardview = "1.0.0"
-constraintlayout = "2.2.0"
+constraintlayout = "2.2.1"
 
 [libraries]
 ads-mobile-sdk = { module = "com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk", version.ref = "adsMobileSdk" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

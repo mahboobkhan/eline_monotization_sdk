@@ -1,5 +1,6 @@
 package com.lowbyte.studio.lbsadssdk.examples
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -22,7 +23,7 @@ class SplashActivity : AppCompatActivity() {
 
         // 1. Initialize GMA Next-Gen SDK
         NextGenAdsManager.initialize(
-            context = this,
+            context = this as android.content.Context,
             appId = "ca-app-pub-3940256099942544~3347511713", // Sample App ID
             billing = billingManager
         ) {
@@ -33,15 +34,16 @@ class SplashActivity : AppCompatActivity() {
             
             // 3. Initialize and load App Open Ad
             val appOpenManager = NextGenAdsManager.getAppOpenAdManager(
-                application = application,
+                application = application ?: (applicationContext as android.app.Application),
                 adUnitId = "ca-app-pub-3940256099942544/9257395915"
             )
             appOpenManager.loadAd()
             
             // 4. Move to Home after a short delay
             Handler(Looper.getMainLooper()).postDelayed({
-                appOpenManager.showAdIfAvailable(this) {
-                    startActivity(Intent(this, HomeActivity::class.java))
+                appOpenManager.showAdIfAvailable(this as Activity) {
+                    val intent = Intent(this as android.content.Context, HomeActivity::class.java)
+                    startActivity(intent)
                     finish()
                 }
             }, 3000)

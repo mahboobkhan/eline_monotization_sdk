@@ -74,12 +74,12 @@ object AdsManager {
         onDismiss: () -> Unit
     ) {
         if (canShowAds(activity)) {
-            rewardedManager.showAd(activity, showDialog, delayMs, onRewardEarned, onDismiss)
+            rewardedManager.showAd(activity, showDialog, delayMs, null, onRewardEarned, onDismiss)
         } else {
             // If pro/no-ads, provide a dummy reward item so the flow can continue
             onRewardEarned(object : RewardItem {
-                override fun getType(): String = "pro_reward"
-                override fun getAmount(): Int = 1
+                override val type: String = "pro_reward"
+                override val amount: Int = 1
             })
             onDismiss()
         }
