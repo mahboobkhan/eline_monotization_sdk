@@ -9,6 +9,7 @@ import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
 import androidx.core.content.edit
+import com.eline.sdk.admob.ngm.remote.RemoteConfigManager
 
 /**
  * Manager for GDPR/UMP Consent.
@@ -32,7 +33,12 @@ object NextGenConsentManager {
      * 
      * @param debug If true, forces EEA geography for testing the consent form.
      */
-    fun gatherConsent(activity: Activity, debug: Boolean = false, onComplete: (Boolean) -> Unit) {
+    fun gatherConsent(
+        activity: Activity, 
+        debug: Boolean = false, 
+        fetchRemoteConfig: Boolean = true,
+        onComplete: (Boolean) -> Unit
+    ) {
         val prefs = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         
         // 1. Check if already gathering
@@ -44,7 +50,13 @@ object NextGenConsentManager {
         // 2. Check if already resolved in previous session (Only if not in debug mode)
         if (!debug && prefs.getBoolean(KEY_CONSENT_RESOLVED, false)) {
             Log.d(TAG, "Consent already resolved in previous session.")
-            onComplete(true)
+            if (fetchRemoteConfig) {
+                RemoteConfigManager.fetchAndActivate { 
+                    onComplete(true)
+                }
+            } else {
+                onComplete(true)
+            }
             return
         }
 
@@ -52,7 +64,13 @@ object NextGenConsentManager {
         if (!debug && !isConsentRequired(activity)) {
             Log.d(TAG, "Consent not required for this country. Marking as resolved.")
             prefs.edit { putBoolean(KEY_CONSENT_RESOLVED, true) }
-            onComplete(true)
+            if (fetchRemoteConfig) {
+                RemoteConfigManager.fetchAndActivate { 
+                    onComplete(true)
+                }
+            } else {
+                onComplete(true)
+            }
             return
         }
 
@@ -95,7 +113,15 @@ object NextGenConsentManager {
                         Log.d(TAG, "Consent resolved successfully.")
                         prefs.edit { putBoolean(KEY_CONSENT_RESOLVED, true) }
                     }
-                    onComplete(canRequestAds())
+                    
+                    if (fetchRemoteConfig) {
+                        Log.d(TAG, "Fetching Remote Config after consent...")
+                        RemoteConfigManager.fetchAndActivate {
+                            onComplete(canRequestAds())
+                        }
+                    } else {
+                        onComplete(canRequestAds())
+                    }
                 }
             },
             { requestError ->
@@ -104,7 +130,14 @@ object NextGenConsentManager {
                 if (requestError.errorCode == 3) {
                     Log.e(TAG, "TIP: A '3' error code often means a network issue or missing Test Device Hashed ID for debug mode.")
                 }
-                onComplete(canRequestAds())
+                
+                if (fetchRemoteConfig) {
+                    RemoteConfigManager.fetchAndActivate {
+                        onComplete(canRequestAds())
+                    }
+                } else {
+                    onComplete(canRequestAds())
+                }
             }
         )
     }
