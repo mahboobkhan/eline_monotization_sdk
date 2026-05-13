@@ -186,14 +186,11 @@ object NextGenAdsManager {
      */
     fun getNativeAdManager(
         adUnitId: String? = null,
-        remoteConfigKey: String? = "native_enabled"
     ): NextGenNativeAdManager {
         val key = adUnitId ?: "default"
         return nativeManagers.getOrPut(key) {
             NextGenNativeAdManager(
-                adUnitId = adUnitId,
-                billingManager = if (::billingManager.isInitialized) billingManager else null,
-                remoteConfigKey = remoteConfigKey
+                billingManager = if (::billingManager.isInitialized) billingManager else null
             )
         }
     }

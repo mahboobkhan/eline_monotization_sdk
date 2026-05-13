@@ -24,9 +24,7 @@ import com.eline.sdk.admob.ngm.remote.RemoteConfigManager
  * Standardized parameters and ad unit ID callbacks.
  */
 class NextGenNativeAdManager(
-    private var adUnitId: String? = null,
     private val billingManager: BillingManager? = null,
-    private val remoteConfigKey: String? = null
 ) {
     private val TAG = "NGAdsManagerNativeAd"
     private var currentNativeAd: NativeAd? = null
@@ -42,15 +40,14 @@ class NextGenNativeAdManager(
     fun loadAndShowNativeAd(
         activity: Activity,
         container: ViewGroup,
-        customAdUnitId: String? = null,
-        customRemoteConfigKey: String? = null,
+        finalAdUnitId: String = "ca-app-pub-3940256099942544/2247696110",
+        finalRemoteKey: String = "native_enabled",
         size: NativeSize = NativeSize.MEDIUM,
         customLayout: Int? = null,
         customShimmer: Int? = null,
         listener: NextGenAdListener? = null
     ) {
-        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
-        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+
 
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
@@ -67,7 +64,7 @@ class NextGenNativeAdManager(
         }
 
         // 2. Remote check
-        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = finalRemoteKey.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
             Log.d(TAG, "Native ad disabled by Remote Config (key: $finalRemoteKey)")
             container.visibility = View.GONE
@@ -165,15 +162,22 @@ class NextGenNativeAdManager(
         adView.registerNativeAd(nativeAd, mediaView)
     }
 
-    fun preloadAd(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
+    fun preloadAd(finalAdUnitId: String = "ca-app-pub-3940256099942544/2247696110",
+                  finalRemoteKey: String = "native_enabled",
+                  listener: NextGenAdListener? = null) {
         // We need a context for consent check, but preloadAd is often called without Activity.
         // If we can't verify, we log a warning.
+
+        val isEnabled = finalRemoteKey.let { RemoteConfigManager.getBoolean(it) } ?: true
+        if (!isEnabled) {
+            Log.d(TAG, "Native ad disabled by Remote Config (key: $finalRemoteKey)")
+            return
+        }
         Log.d(TAG, "Native Preload: Checking consent...")
         
         if (isLoading) return
         isLoading = true
         
-        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
         val adRequest = NativeAdRequest
             .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
             .build()
@@ -203,10 +207,18 @@ class NextGenNativeAdManager(
     fun showAd(
         activity: Activity,
         container: ViewGroup,
-        layoutResId: Int? = null,
+        layoutResId: Int = 1,
+        finalRemoteKey: String = "native_enabled",
         onAdLoaded: (() -> Unit)? = null,
         onAdFailed: (() -> Unit)? = null
     ) {
+
+        val isEnabled = finalRemoteKey.let { RemoteConfigManager.getBoolean(it) } ?: true
+        if (!isEnabled) {
+            Log.d(TAG, "Native ad disabled by Remote Config (key: $finalRemoteKey)")
+            return
+        }
+
         if (billingManager?.isUserPro() == true) {
             container.visibility = View.GONE
             return

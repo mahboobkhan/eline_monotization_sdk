@@ -106,12 +106,19 @@ class NextGenInterstitialAdManager(
         showDialog: Boolean = true,
         delayMs: Long = 500,
         reloadOnDismiss: Boolean = true,
+        remoteConfig: String = "fullscreen_enabled",
         adUnitId: String? = null,
         isFragment: Boolean = false,
         dialogStyle: AdLoadingDialog.Style = AdLoadingDialog.Style.SMALL,
         listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
+        val isEnabled = remoteConfig.let { RemoteConfigManager.getBoolean(it) } ?: true
+        if (!isEnabled) {
+            Log.d(TAG, "Interstitial disabled by Remote Config (key: $remoteConfig)")
+            return
+        }
+
         val ad = interstitialAd
         if (ad == null) {
             Log.d(TAG, "Ad not loaded. Loading now...")
