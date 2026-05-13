@@ -170,7 +170,9 @@ class NextGenInterstitialAdManager(
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                ad.show(activity)
+                activity.runOnUiThread {
+                    ad.show(activity)
+                }
             }, delayMs)
         } else {
             ad.show(activity)

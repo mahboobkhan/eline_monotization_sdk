@@ -144,7 +144,9 @@ class NextGenAppOpenAdManager(
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                showActualAd(activity, reloadOnDismiss, isFragment, listener, onComplete)
+                activity.runOnUiThread {
+                    showActualAd(activity, reloadOnDismiss, isFragment, listener, onComplete)
+                }
             }, delayMs)
         } else {
             showActualAd(activity, reloadOnDismiss, isFragment, listener, onComplete)

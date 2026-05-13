@@ -161,9 +161,11 @@ class NextGenRewardedAdManager(
             dialog.show()
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
-                ad.show(activity) { rewardItem ->
-                    Log.d(TAG, "User earned reward: ${rewardItem.amount} ${rewardItem.type}")
-                    listener?.onUserEarnedReward(finalAdUnitId, rewardItem.amount, rewardItem.type)
+                activity.runOnUiThread {
+                    ad.show(activity) { rewardItem ->
+                        Log.d(TAG, "User earned reward: ${rewardItem.amount} ${rewardItem.type}")
+                        listener?.onUserEarnedReward(finalAdUnitId, rewardItem.amount, rewardItem.type)
+                    }
                 }
             }, delayMs)
         } else {

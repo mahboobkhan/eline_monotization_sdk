@@ -172,7 +172,9 @@ class NextGenInterstitialCounterManager(
                 dialog.show()
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     dialog.dismiss()
-                    interstitialAd.show(activity)
+                    activity.runOnUiThread {
+                        interstitialAd.show(activity)
+                    }
                 }, 500)
             } else {
                 interstitialAd.show(activity)
