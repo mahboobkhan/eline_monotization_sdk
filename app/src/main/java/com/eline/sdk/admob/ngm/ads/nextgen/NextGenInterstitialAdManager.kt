@@ -116,6 +116,7 @@ class NextGenInterstitialAdManager(
         val isEnabled = remoteConfig.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
             Log.d(TAG, "Interstitial disabled by Remote Config (key: $remoteConfig)")
+            onDismiss()
             return
         }
 
