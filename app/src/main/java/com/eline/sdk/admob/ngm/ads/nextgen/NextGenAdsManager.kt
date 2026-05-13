@@ -121,15 +121,11 @@ object NextGenAdsManager {
      * Creates a new Interval-based Interstitial manager.
      */
     fun getInterstitialIntervalManager(
-        adUnitId: String,
-        remoteConfigKey: String? = "interstitial_interval_enabled",
-        intervalKey: String? = "interstitial_interval"
+        intervalKey: String = "interstitial_interval"
     ): NextGenInterstitialIntervalManager {
-        return interstitialIntervalManagers.getOrPut(adUnitId) {
+        return interstitialIntervalManagers.getOrPut(intervalKey) {
             NextGenInterstitialIntervalManager(
-                adUnitId = adUnitId,
                 billingManager = if (::billingManager.isInitialized) billingManager else null,
-                remoteConfigKey = remoteConfigKey,
                 intervalKey = intervalKey
             )
         }

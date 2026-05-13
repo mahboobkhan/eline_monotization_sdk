@@ -15,9 +15,7 @@ import com.eline.sdk.admob.ngm.utils.AdLoadingDialog
  * Shows ad only after a certain time interval has passed or if startDelay is false.
  */
 class NextGenInterstitialIntervalManager(
-    private var adUnitId: String,
     private val billingManager: BillingManager? = null,
-    private val remoteConfigKey: String? = null,
     private val intervalKey: String? = null
 ) {
     private val TAG = "NGAdsManagerInterInterval"
@@ -27,10 +25,16 @@ class NextGenInterstitialIntervalManager(
     /**
      * Starts preloading ads for this ad unit with success/failure logging.
      */
-    fun startPreloading(customAdUnitId: String? = null, listener: NextGenAdListener? = null) {
+    fun startPreloading(finalAdUnitId: String = "", finalRemoteKey: String? = null, listener: NextGenAdListener? = null) {
+        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        if (!isEnabled) {
+            Log.d(TAG, "Interstitial Interval disabled by Remote Config (key: $finalRemoteKey)")
+
+            return
+        }
+
         if (isLoading) return
         isLoading = true
-        val finalAdUnitId = customAdUnitId ?: adUnitId
         val adRequest = AdRequest.Builder(finalAdUnitId).build()
         val preloadConfig = PreloadConfiguration(adRequest)
         
@@ -70,8 +74,8 @@ class NextGenInterstitialIntervalManager(
      */
     fun showAd(
         activity: Activity,
-        customAdUnitId: String? = null,
-        customRemoteConfigKey: String? = null,
+        finalAdUnitId: String = "",
+        finalRemoteKey: String? = null,
         intervalSeconds: Long = 60,
         startDelay: Boolean = true,
         reloadOnDismiss: Boolean = true,
@@ -80,8 +84,7 @@ class NextGenInterstitialIntervalManager(
         listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
-        val finalAdUnitId = customAdUnitId ?: adUnitId
-        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+      //  val finalAdUnitId = customAdUnitId ?: adUnitId
 
         // 1. Pro check
         if (billingManager?.isUserPro() == true) {
