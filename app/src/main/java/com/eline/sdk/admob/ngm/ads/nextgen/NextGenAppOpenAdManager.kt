@@ -166,7 +166,7 @@ class NextGenAppOpenAdManager(
                 isShowingAd = false
                 listener?.onAdDismissed(finalAdUnitId)
                 if (reloadOnDismiss) loadAd(listener = listener)
-                if (!isFragment) onComplete?.invoke()
+                if (!isFragment) activity.runOnUiThread { onComplete?.invoke() }
             }
 
             override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
@@ -174,7 +174,7 @@ class NextGenAppOpenAdManager(
                 appOpenAd = null
                 isShowingAd = false
                 listener?.onAdFailedToShow(finalAdUnitId, error.toString())
-                onComplete?.invoke()
+                activity.runOnUiThread { onComplete?.invoke() }
             }
 
             override fun onAdShowedFullScreenContent() {
@@ -193,7 +193,7 @@ class NextGenAppOpenAdManager(
                 listener?.onAdImpression(finalAdUnitId)
                 if (isFragment) {
                     Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
-                    onComplete?.invoke()
+                    activity.runOnUiThread { onComplete?.invoke() }
                 }
             }
         }

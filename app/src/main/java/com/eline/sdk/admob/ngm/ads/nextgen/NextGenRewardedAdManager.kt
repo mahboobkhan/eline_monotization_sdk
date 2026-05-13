@@ -130,13 +130,13 @@ class NextGenRewardedAdManager(
                 if (reloadOnDismiss) loadAd(activity, listener = listener)
                 if (!isFragment) {
                     Log.d(TAG, "isFragment is false, dismissing via onAdDismissed.")
-                    onDismiss()
+                    activity.runOnUiThread { onDismiss() }
                 }
             }
 
             override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
                 originalCallback?.onAdFailedToShowFullScreenContent(error)
-                onDismiss()
+                activity.runOnUiThread { onDismiss() }
             }
 
             override fun onAdShowedFullScreenContent() {
@@ -151,7 +151,7 @@ class NextGenRewardedAdManager(
                 originalCallback?.onAdImpression()
                 if (isFragment) {
                     Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
-                    onDismiss()
+                    activity.runOnUiThread { onDismiss() }
                 }
             }
         }

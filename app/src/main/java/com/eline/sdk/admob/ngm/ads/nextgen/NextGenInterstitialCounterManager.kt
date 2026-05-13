@@ -138,13 +138,13 @@ class NextGenInterstitialCounterManager(
                     currentCount = 0
                     listener?.onAdDismissed(finalAdUnitId)
                     if (reloadOnDismiss) startPreloading(finalAdUnitId)
-                    if (!isFragment) onDismiss()
+                    if (!isFragment) activity.runOnUiThread { onDismiss() }
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError) {
                     Log.e(TAG, "Ad failed to show: ${error.message}")
                     listener?.onAdFailedToShow(finalAdUnitId, error.toString())
-                    onDismiss()
+                    activity.runOnUiThread { onDismiss() }
                 }
 
                 override fun onAdShowedFullScreenContent() {
@@ -162,7 +162,7 @@ class NextGenInterstitialCounterManager(
                     listener?.onAdImpression(finalAdUnitId)
                     if (isFragment) {
                         Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
-                        onDismiss()
+                        activity.runOnUiThread { onDismiss() }
                     }
                 }
             }

@@ -137,7 +137,7 @@ class NextGenInterstitialAdManager(
                 AdStateController.isInterstitialShowing = false
                 if (reloadOnDismiss) loadAd(adUnitId,listener = listener)
                 if (!isFragment) {
-                    onDismiss()
+                    activity.runOnUiThread { onDismiss() }
                 }
             }
 
@@ -145,7 +145,7 @@ class NextGenInterstitialAdManager(
                 Log.d(TAG, "fullscreen onAdFailedToShowFullScreenContent ${error.message}")
                 originalCallback?.onAdFailedToShowFullScreenContent(error)
                 AdStateController.isInterstitialShowing = false
-                onDismiss()
+                activity.runOnUiThread { onDismiss() }
             }
 
             override fun onAdShowedFullScreenContent() {
@@ -160,7 +160,7 @@ class NextGenInterstitialAdManager(
                 originalCallback?.onAdImpression()
                 if (isFragment) {
                     Log.d(TAG, "isFragment is true, dismissing via onAdImpression.")
-                    onDismiss()
+                    activity.runOnUiThread { onDismiss() }
                 }
             }
         }
