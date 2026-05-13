@@ -23,6 +23,14 @@ object NextGenAdsManager {
     private var isInitialized = false
     private lateinit var billingManager: BillingManager
 
+    private var bannerManager: NextGenBannerAdManager? = null
+    private var interstitialManager: NextGenInterstitialAdManager? = null
+    private var appOpenAdManager: NextGenAppOpenAdManager? = null
+    private val nativeManagers = mutableMapOf<String, NextGenNativeAdManager>()
+    private val rewardedManagers = mutableMapOf<String, NextGenRewardedAdManager>()
+    private val interstitialCounterManagers = mutableMapOf<String, NextGenInterstitialCounterManager>()
+    private val interstitialIntervalManagers = mutableMapOf<String, NextGenInterstitialIntervalManager>()
+
     /**
      * Initializes the GMA Next-Gen SDK on a background thread.
      * 
@@ -69,25 +77,26 @@ object NextGenAdsManager {
         adUnitId: String? = null,
         remoteConfigKey: String? = "banner_enabled"
     ): NextGenBannerAdManager {
-        return NextGenBannerAdManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey
-        )
+        if (bannerManager == null) {
+            bannerManager = NextGenBannerAdManager(
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey
+            )
+        }
+        return bannerManager!!
     }
 
     /**
      * Creates a new Interstitial manager with optional configuration.
      */
-    fun getInterstitialManager(
-        adUnitId: String? = null,
-        remoteConfigKey: String? = "interstitial_enabled"
-    ): NextGenInterstitialAdManager {
-        return NextGenInterstitialAdManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey
-        )
+    fun getInterstitialManager(): NextGenInterstitialAdManager {
+        if (interstitialManager == null) {
+            interstitialManager = NextGenInterstitialAdManager(
+                billingManager = if (::billingManager.isInitialized) billingManager else null
+            )
+        }
+        return interstitialManager!!
     }
 
     /**
@@ -98,12 +107,14 @@ object NextGenAdsManager {
         remoteConfigKey: String? = "interstitial_counter_enabled",
         thresholdKey: String? = "interstitial_threshold"
     ): NextGenInterstitialCounterManager {
-        return NextGenInterstitialCounterManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey,
-            thresholdKey = thresholdKey
-        )
+        return interstitialCounterManagers.getOrPut(adUnitId) {
+            NextGenInterstitialCounterManager(
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey,
+                thresholdKey = thresholdKey
+            )
+        }
     }
 
     /**
@@ -114,23 +125,30 @@ object NextGenAdsManager {
         remoteConfigKey: String? = "interstitial_interval_enabled",
         intervalKey: String? = "interstitial_interval"
     ): NextGenInterstitialIntervalManager {
-        return NextGenInterstitialIntervalManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey,
-            intervalKey = intervalKey
-        )
+        return interstitialIntervalManagers.getOrPut(adUnitId) {
+            NextGenInterstitialIntervalManager(
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey,
+                intervalKey = intervalKey
+            )
+        }
     }
 
-    /**
-     * Starts preloading Interstitial ads globally.
-     */
-    fun startPreloadingInterstitial(adUnitId: String) {
-        val adRequest = AdRequest.Builder(adUnitId).build()
-        val preloadConfig = PreloadConfiguration(adRequest)
-        InterstitialAdPreloader.start(adUnitId, preloadConfig)
-        Log.d(TAG, "Global preloading started for: $adUnitId")
-    }
+//    /**
+//     * Starts preloading Interstitial ads globally.
+//     */
+//    fun startPreloadingInterstitial(adUnitId: String,remoteConfigKey: Boolean = true) {
+//        if (remoteConfigKey){
+//            val adRequest = AdRequest.Builder(adUnitId).build()
+//            val preloadConfig = PreloadConfiguration(adRequest)
+//            InterstitialAdPreloader.start(adUnitId, preloadConfig)
+//            Log.d(TAG, "Global preloading started for: remote $adUnitId")
+//        }else{
+//            Log.d(TAG, "Global preloading not requested remote False")
+//
+//        }
+//    }
 
     /**
      * Preloads a Banner ad using the global singleton access.
@@ -153,11 +171,14 @@ object NextGenAdsManager {
         adUnitId: String? = null,
         remoteConfigKey: String? = "rewarded_enabled"
     ): NextGenRewardedAdManager {
-        return NextGenRewardedAdManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey
-        )
+        val key = adUnitId ?: "default"
+        return rewardedManagers.getOrPut(key) {
+            NextGenRewardedAdManager(
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey
+            )
+        }
     }
 
     /**
@@ -167,11 +188,14 @@ object NextGenAdsManager {
         adUnitId: String? = null,
         remoteConfigKey: String? = "native_enabled"
     ): NextGenNativeAdManager {
-        return NextGenNativeAdManager(
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey
-        )
+        val key = adUnitId ?: "default"
+        return nativeManagers.getOrPut(key) {
+            NextGenNativeAdManager(
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey
+            )
+        }
     }
 
     /**
@@ -180,14 +204,17 @@ object NextGenAdsManager {
     fun getAppOpenAdManager(
         application: Application,
         adUnitId: String,
-        remoteConfigKey: String? = "app_open_enabled"
+        remoteConfigKey: String? = "openAppAdIsEnable"
     ): NextGenAppOpenAdManager {
-        return NextGenAppOpenAdManager(
-            application = application,
-            adUnitId = adUnitId,
-            billingManager = if (::billingManager.isInitialized) billingManager else null,
-            remoteConfigKey = remoteConfigKey
-        )
+        if (appOpenAdManager == null) {
+            appOpenAdManager = NextGenAppOpenAdManager(
+                application = application,
+                adUnitId = adUnitId,
+                billingManager = if (::billingManager.isInitialized) billingManager else null,
+                remoteConfigKey = remoteConfigKey
+            )
+        }
+        return appOpenAdManager!!
     }
 
     /**

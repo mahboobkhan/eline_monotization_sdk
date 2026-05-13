@@ -17,9 +17,7 @@ import com.eline.sdk.admob.ngm.utils.AdLoadingDialog
  * Standardized parameters and context-aware dismissal logic.
  */
 class NextGenInterstitialAdManager(
-    private var adUnitId: String? = null,
-    private val billingManager: BillingManager? = null,
-    private val remoteConfigKey: String? = null
+    private val billingManager: BillingManager? = null
 ) {
     private val TAG = "NGAdsManagerInter"
     private var interstitialAd: InterstitialAd? = null
@@ -29,22 +27,20 @@ class NextGenInterstitialAdManager(
      * Loads an interstitial ad.
      */
     fun loadAd(
-        activity: Activity,
         customAdUnitId: String? = null,
-        customRemoteConfigKey: String? = null,
+        customRemoteConfigKey: String = "fullscreen_enabled",
         listener: NextGenAdListener? = null
     ) {
-        val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/1033173712"
-        val finalRemoteKey = customRemoteConfigKey ?: remoteConfigKey
+        val finalAdUnitId = customAdUnitId ?: "ca-app-pub-3940256099942544/1033173712"
 
         if (billingManager?.isUserPro() == true) {
             Log.d(TAG, "Interstitial: User is Pro, ads suppressed.")
             return
         }
         
-        val isEnabled = finalRemoteKey?.let { RemoteConfigManager.getBoolean(it) } ?: true
+        val isEnabled = customRemoteConfigKey.let { RemoteConfigManager.getBoolean(it) } ?: true
         if (!isEnabled) {
-            Log.d(TAG, "Interstitial disabled by Remote Config (key: $finalRemoteKey)")
+            Log.d(TAG, "Interstitial disabled by Remote Config (key: $customRemoteConfigKey)")
             return
         }
 
@@ -110,17 +106,16 @@ class NextGenInterstitialAdManager(
         showDialog: Boolean = true,
         delayMs: Long = 500,
         reloadOnDismiss: Boolean = true,
+        adUnitId: String? = null,
         isFragment: Boolean = false,
         dialogStyle: AdLoadingDialog.Style = AdLoadingDialog.Style.SMALL,
         listener: NextGenAdListener? = null,
         onDismiss: () -> Unit
     ) {
-        val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/1033173712"
         val ad = interstitialAd
-
         if (ad == null) {
             Log.d(TAG, "Ad not loaded. Loading now...")
-            loadAd(activity, listener = listener)
+            loadAd( adUnitId,listener = listener)
             onDismiss()
             return
         }
@@ -129,16 +124,17 @@ class NextGenInterstitialAdManager(
         val originalCallback = ad.adEventCallback
         ad.adEventCallback = object : InterstitialAdEventCallback {
             override fun onAdDismissedFullScreenContent() {
+                Log.d(TAG, "dismissing via onAdDismissed.")
                 originalCallback?.onAdDismissedFullScreenContent()
                 AdStateController.isInterstitialShowing = false
-                if (reloadOnDismiss) loadAd(activity, listener = listener)
+                if (reloadOnDismiss) loadAd(adUnitId,listener = listener)
                 if (!isFragment) {
-                    Log.d(TAG, "isFragment is false, dismissing via onAdDismissed.")
                     onDismiss()
                 }
             }
 
             override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+                Log.d(TAG, "fullscreen onAdFailedToShowFullScreenContent ${error.message}")
                 originalCallback?.onAdFailedToShowFullScreenContent(error)
                 AdStateController.isInterstitialShowing = false
                 onDismiss()

@@ -24,14 +24,14 @@ class HomeActivity : AppCompatActivity() {
         val btnShowInterstitial = findViewById<Button>(R.id.btn_show_interstitial)
 
         // 1. Show Banner Ad (Adaptive & Collapsible)
-        val bannerManager = NextGenAdsManager.getBannerManager("ca-app-pub-3940256099942544/9214589741")
-        Log.d(TAG, "Loading banner ad...")
-        bannerManager.loadAndShowBanner(
-            activity = this as Activity,
-            container = bannerContainer,
-            isCollapsible = true,
-            collapsibleType = "bottom"
-        )
+//        val bannerManager = NextGenAdsManager.getBannerManager("ca-app-pub-3940256099942544/9214589741")
+//        Log.d(TAG, "Loading banner ad...")
+//        bannerManager.loadAndShowBanner(
+//            activity = this as Activity,
+//            container = bannerContainer,
+//            isCollapsible = true,
+//            collapsibleType = "bottom"
+//        )
 
         // 2. Show Medium Native Ad with Shimmer
         val nativeManager = NextGenAdsManager.getNativeAdManager("ca-app-pub-3940256099942544/2247696110")

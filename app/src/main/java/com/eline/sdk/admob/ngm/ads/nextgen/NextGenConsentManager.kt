@@ -25,6 +25,7 @@ object NextGenConsentManager {
     )
 
     private var consentInformation: ConsentInformation? = null
+    private var isGatheringConsent = false
 
     /**
      * Initializes and gathers consent if required.
@@ -34,14 +35,20 @@ object NextGenConsentManager {
     fun gatherConsent(activity: Activity, debug: Boolean = false, onComplete: (Boolean) -> Unit) {
         val prefs = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         
-        // 1. Check if already resolved in previous session (Only if not in debug mode)
+        // 1. Check if already gathering
+        if (isGatheringConsent) {
+            Log.d(TAG, "Consent gathering already in progress. Skipping duplicate call.")
+            return
+        }
+
+        // 2. Check if already resolved in previous session (Only if not in debug mode)
         if (!debug && prefs.getBoolean(KEY_CONSENT_RESOLVED, false)) {
             Log.d(TAG, "Consent already resolved in previous session.")
             onComplete(true)
             return
         }
 
-        // 2. Check if country requires consent (Skip if in debug mode)
+        // 3. Check if country requires consent (Skip if in debug mode)
         if (!debug && !isConsentRequired(activity)) {
             Log.d(TAG, "Consent not required for this country. Marking as resolved.")
             prefs.edit { putBoolean(KEY_CONSENT_RESOLVED, true) }
@@ -49,7 +56,9 @@ object NextGenConsentManager {
             return
         }
 
-        // 3. Setup Debug Settings if enabled
+        isGatheringConsent = true
+
+        // 4. Setup Debug Settings if enabled
         val debugSettings = if (debug) {
             Log.d(TAG, "Debug mode enabled: Forcing EEA geography for testing.")
             ConsentDebugSettings.Builder(activity)
@@ -57,7 +66,7 @@ object NextGenConsentManager {
                 .build()
         } else null
 
-        // 4. Use UMP SDK to gather consent
+        // 5. Use UMP SDK to gather consent
         Log.d(TAG, "Gathering consent via UMP SDK...")
         val params = ConsentRequestParameters.Builder()
             .setTagForUnderAgeOfConsent(false)
@@ -76,6 +85,7 @@ object NextGenConsentManager {
             params,
             {
                 UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { formError ->
+                    isGatheringConsent = false
                     if (formError != null) {
                         Log.e(TAG, "Consent form error: ${formError.message}")
                     }
@@ -89,6 +99,7 @@ object NextGenConsentManager {
                 }
             },
             { requestError ->
+                isGatheringConsent = false
                 Log.e(TAG, "Consent update request failed: [${requestError.errorCode}] ${requestError.message}")
                 if (requestError.errorCode == 3) {
                     Log.e(TAG, "TIP: A '3' error code often means a network issue or missing Test Device Hashed ID for debug mode.")

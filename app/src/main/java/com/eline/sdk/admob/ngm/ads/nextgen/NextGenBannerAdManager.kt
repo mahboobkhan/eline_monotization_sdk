@@ -27,6 +27,7 @@ class NextGenBannerAdManager(
 ) {
     private val TAG = "NGAdsManagerBannerAd"
     private var bannerAd: BannerAd? = null
+    private var isLoading = false
 
     /**
      * Loads and displays a banner ad.
@@ -68,6 +69,8 @@ class NextGenBannerAdManager(
             return
         }
 
+        if (isLoading) return
+        isLoading = true
         Log.d(TAG, "Loading and showing Banner ad: $finalAdUnitId")
 
         val adSize = if (maxHeight != null) {
@@ -92,6 +95,7 @@ class NextGenBannerAdManager(
             adView.loadAd(adRequest, object : AdLoadCallback<BannerAd> {
                 override fun onAdLoaded(ad: BannerAd) {
                     Log.d(TAG, "Banner ad loaded: $finalAdUnitId")
+                    isLoading = false
                     bannerAd = ad
                     listener?.onAdLoaded(finalAdUnitId)
 
@@ -135,6 +139,7 @@ class NextGenBannerAdManager(
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.e(TAG, "Banner ad failed to load: ${adError.message} (Code: ${adError.code})")
+                    isLoading = false
                     bannerAd = null
                     listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
                     container.visibility = android.view.View.GONE
@@ -158,16 +163,20 @@ class NextGenBannerAdManager(
         }
 
         val finalAdUnitId = adUnitId ?: "ca-app-pub-3940256099942544/9214589741"
+        if (isLoading) return
+        isLoading = true
         val adRequest = BannerAdRequest.Builder(finalAdUnitId, adSize).build()
 
         activity.runOnUiThread {
             val adView = AdView(activity)
             adView.loadAd(adRequest, object : AdLoadCallback<BannerAd> {
                 override fun onAdLoaded(ad: BannerAd) {
+                    isLoading = false
                     bannerAd = ad
                     listener?.onAdLoaded(finalAdUnitId)
                 }
                 override fun onAdFailedToLoad(adError: LoadAdError) {
+                    isLoading = false
                     listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
                 }
             })

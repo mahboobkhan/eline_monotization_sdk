@@ -30,6 +30,7 @@ class NextGenNativeAdManager(
 ) {
     private val TAG = "NGAdsManagerNativeAd"
     private var currentNativeAd: NativeAd? = null
+    private var isLoading = false
 
     enum class NativeSize {
         SMALL, MEDIUM, LARGE
@@ -73,6 +74,9 @@ class NextGenNativeAdManager(
             return
         }
 
+        if (isLoading) return
+        isLoading = true
+
         // 3. Show Shimmer
         val shimmerRes = customShimmer ?: when (size) {
             NativeSize.SMALL -> R.layout.shimmer_native_small
@@ -94,6 +98,7 @@ class NextGenNativeAdManager(
         val adCallback = object : NativeAdLoaderCallback {
             override fun onNativeAdLoaded(nativeAd: NativeAd) {
                 Log.d(TAG, "Native ad loaded: $finalAdUnitId")
+                isLoading = false
                 currentNativeAd?.destroy()
                 currentNativeAd = nativeAd
                 listener?.onAdLoaded(finalAdUnitId)
@@ -123,6 +128,7 @@ class NextGenNativeAdManager(
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.e(TAG, "Native ad failed to load: ${adError.message}")
+                isLoading = false
                 listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
                 activity.runOnUiThread {
                     container.visibility = View.GONE
@@ -164,6 +170,9 @@ class NextGenNativeAdManager(
         // If we can't verify, we log a warning.
         Log.d(TAG, "Native Preload: Checking consent...")
         
+        if (isLoading) return
+        isLoading = true
+        
         val finalAdUnitId = customAdUnitId ?: adUnitId ?: "ca-app-pub-3940256099942544/2247696110"
         val adRequest = NativeAdRequest
             .Builder(finalAdUnitId, listOf(NativeAd.NativeAdType.NATIVE))
@@ -172,6 +181,7 @@ class NextGenNativeAdManager(
         val adCallback = object : NativeAdLoaderCallback {
             override fun onNativeAdLoaded(nativeAd: NativeAd) {
                 Log.d(TAG, "Native ad preloaded: $finalAdUnitId")
+                isLoading = false
                 currentNativeAd?.destroy()
                 currentNativeAd = nativeAd
                 listener?.onAdLoaded(finalAdUnitId)
@@ -179,6 +189,7 @@ class NextGenNativeAdManager(
 
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.e(TAG, "Native ad preloading failed: ${adError.message}")
+                isLoading = false
                 listener?.onAdFailedToLoad(finalAdUnitId, adError.toString())
             }
         }
